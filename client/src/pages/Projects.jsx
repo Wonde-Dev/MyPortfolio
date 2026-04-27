@@ -257,15 +257,31 @@ const Projects = () => {
               className={`${themeStyles.card} rounded-2xl overflow-hidden cursor-pointer group`}
               onClick={() => handleViewProject(project.slug)}
             >
-             <div className="h-48 overflow-hidden">
-                 {project.image_url ? (
-                   <img src={project.image_url} alt={project.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-                 ) : (
-                   <div className="w-full h-full bg-gradient-to-br from-purple-600 via-pink-600 to-blue-600 flex items-center justify-center">
-                     <span className="text-white text-4xl">🚀</span>
-                   </div>
-                 )}
-               </div>
+              <div className="h-48 overflow-hidden">
+                  {project.image_url ? (
+                    <img src={project.image_url} alt={project.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                  ) : (
+                    <div className="w-full h-full bg-gradient-to-br from-purple-600 via-pink-600 to-blue-600 flex items-center justify-center">
+                      {/* Show placeholder images based on project title */}
+                      {project.title === "E-Commerce Platform" && (
+                        <img src="/assets/E-Commerce.jpeg" alt={project.title} className="w-full h-full object-cover" />
+                      )}
+                      {project.title === "Task Management App" && (
+                        <img src="/assets/Task Management.jpeg" alt={project.title} className="w-full h-full object-cover" />
+                      )}
+                      {project.title === "Portfolio Website" && (
+                        <img src="/assets/wonde.jpg" alt={project.title} className="w-full h-full object-cover" />
+                      )}
+                      {!project.image_url && !(
+                        project.title === "E-Commerce Platform" ||
+                        project.title === "Task Management App" ||
+                        project.title === "Portfolio Website"
+                      ) && (
+                        <span className="text-white text-4xl">🚀</span>
+                      )}
+                    </div>
+                  )}
+                </div>
               <div className="p-6">
                 <div className="flex items-start justify-between mb-2">
                   <h3 className="text-xl font-bold text-gray-900 dark:text-white">{project.title}</h3>
