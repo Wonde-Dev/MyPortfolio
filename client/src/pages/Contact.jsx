@@ -175,31 +175,31 @@ const Contact = () => {
                 </div>
               </div>
 
-              <div className="mt-8 pt-6 border-t border-gray-200 dark:border-gray-700">
-                <h3 className="text-lg font-semibold mb-4">Quick Login</h3>
-                <div className="space-y-3">
-                  <button
-                    onClick={() => handleGoogleLogin('google')}
-                    disabled={!formData.email || googleLoading}
-                    className="w-full flex items-center justify-center gap-3 px-4 py-3 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 rounded-lg font-medium hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    <FaGoogle size={22} className="text-red-500" />
-                    {googleLoading && googleLoginType === 'google' ? 'Logging in...' : 'Continue with Google'}
-                  </button>
-                  
-                  <button
-                    onClick={() => handleGoogleLogin('github')}
-                    disabled={!formData.email || googleLoading}
-                    className="w-full flex items-center justify-center gap-3 px-4 py-3 bg-gray-900 dark:bg-gray-700 text-white rounded-lg font-medium hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    <FaGithub size={22} />
-                    {googleLoading && googleLoginType === 'github' ? 'Logging in...' : 'Continue with GitHub'}
-                  </button>
-                </div>
-                <p className="text-xs text-gray-500 dark:text-gray-400 text-center mt-3">
-                  Quick login to submit contact form
-                </p>
-              </div>
+               <div className="mt-8 pt-6 border-t border-gray-200 dark:border-gray-700">
+                 <h3 className="text-lg font-semibold mb-4">Quick Login</h3>
+                 <div className="space-y-3">
+                   <button
+                     onClick={() => handleGoogleLogin('google')}
+                     disabled={googleLoading}
+                     className="w-full flex items-center justify-center gap-3 px-4 py-3 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-300 dark:border-gray-600 rounded-lg font-medium hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                   >
+                     <FaGoogle size={22} className="text-red-500" />
+                     {googleLoading && googleLoginType === 'google' ? 'Logging in...' : 'Continue with Google'}
+                   </button>
+                   
+                   <button
+                     onClick={() => handleGoogleLogin('github')}
+                     disabled={googleLoading}
+                     className="w-full flex items-center justify-center gap-3 px-4 py-3 bg-gray-900 dark:bg-gray-700 text-white rounded-lg font-medium hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                   >
+                     <FaGithub size={22} />
+                     {googleLoading && googleLoginType === 'github' ? 'Logging in...' : 'Continue with GitHub'}
+                   </button>
+                 </div>
+                 <p className="text-xs text-gray-500 dark:text-gray-400 text-center mt-3">
+                   Quick login to submit contact form (works without email)
+                 </p>
+               </div>
 
 
             </div>

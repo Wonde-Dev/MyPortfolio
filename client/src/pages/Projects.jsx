@@ -72,8 +72,8 @@ const Projects = () => {
             if (user.role === 'admin') {
               setIsAdmin(true);
             }
-          } catch (_error) {
-            // Handle token parsing error
+          } catch (error) {
+            console.error('Error parsing token:', error);
           }
         }
       }
@@ -109,9 +109,9 @@ const Projects = () => {
         gallery_images: []
       });
       setGalleryUrls(['']);
-    } catch (error) {
-      console.error('Error adding project:', error);
-    }
+           } catch (_error) {
+             console.error('Error parsing token:', _error);
+           }
   };
 
    const handleFileUpload = async (e) => {
