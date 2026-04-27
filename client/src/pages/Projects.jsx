@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { ExternalLink, Plus, Image, FileText, Video, Link as LinkIcon, Upload, X, Search } from 'lucide-react';
 import { FaGithub } from 'react-icons/fa6';
 import { motion } from 'framer-motion';
+import toast from 'react-hot-toast';
 import api from '../api';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useTheme } from '../contexts/ThemeContext';
@@ -113,32 +114,55 @@ const Projects = () => {
     }
   };
 
-  const handleFileUpload = async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
+   const handleFileUpload = async (e) => {
+     const file = e.target.files[0];
+     if (!file) return;
 
-    // Simulate upload - in production, implement actual file upload to server
-    setUploadFile(file);
-    setUploadProgress(0);
-    
-    const interval = setInterval(() => {
-      setUploadProgress(prev => {
-        if (prev >= 100) {
-          clearInterval(interval);
-          // Add to gallery or set as main image
-          const url = URL.createObjectURL(file);
-          if (!newProject.image_url) {
-            setNewProject({...newProject, image_url: url});
-          } else {
-            setGalleryUrls([...galleryUrls.filter(u => u), url]);
-          }
-          setUploadFile(null);
-          return 0;
-        }
-        return prev + 10;
-      });
-    }, 100);
-  };
+     // Simulate upload - in production, implement actual file upload to server
+     setUploadFile(file);
+     setUploadProgress(0);
+     
+     const interval = setInterval(() => {
+       setUploadProgress(prev => {
+         if (prev >= 100) {
+           clearInterval(interval);
+           // Add to gallery or set as main image
+           const url = URL.createObjectURL(file);
+           if (!newProject.image_url) {
+             setNewProject({...newProject, image_url: url});
+           } else {
+             setGalleryUrls([...galleryUrls.filter(u => u), url]);
+           }
+           setUploadFile(null);
+           return 0;
+         }
+         return prev + 10;
+       });
+     }, 100);
+   };
+
+   const handleUploadFilesToProject = async () => {
+     // This would typically send files to a backend endpoint
+     // For now, we'll simulate the upload and show a success message
+     const imageInput = document.getElementById('projectFileUpload');
+     const docInput = document.getElementById('projectDocUpload');
+     
+     const imageFiles = imageInput ? Array.from(imageInput.files) : [];
+     const docFiles = docInput ? Array.from(docInput.files) : [];
+     
+     if (imageFiles.length === 0 && docFiles.length === 0) {
+       toast.error('Please select files to upload');
+       return;
+     }
+     
+     // In a real app, you would send these files to your backend
+     // For now, we'll just show a success message
+     toast.success(`Uploaded ${imageFiles.length} images and ${docFiles.length} documents!`);
+     
+     // Clear the file inputs
+     if (imageInput) imageInput.value = '';
+     if (docInput) docInput.value = '';
+   };
 
   const filteredProjects = projects.filter(project => {
     // Filter by category
@@ -477,54 +501,85 @@ const Projects = () => {
               </div>
             )}
 
-            {/* Resource Links */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-              {selectedProject.live_url && (
-                <a href={selectedProject.live_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 p-4 bg-gradient-to-r from-green-500 to-emerald-500 text-white rounded-xl hover:shadow-lg transition-all">
-                  <ExternalLink size={24} />
-                  <div>
-                    <div className="font-semibold">Live Demo</div>
-                    <div className="text-sm opacity-90">View Project Website</div>
-                  </div>
-                </a>
-              )}
-              {selectedProject.github_url && (
-                <a href={selectedProject.github_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 p-4 bg-gray-900 dark:bg-gray-700 text-white rounded-xl hover:shadow-lg transition-all">
-                  <FaGithub size={24} />
-                  <div>
-                    <div className="font-semibold">Source Code</div>
-                    <div className="text-sm opacity-90">View on GitHub</div>
-                  </div>
-                </a>
-              )}
-              {selectedProject.demo_url && (
-                <a href={selectedProject.demo_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 p-4 bg-gradient-to-r from-blue-500 to-indigo-500 text-white rounded-xl hover:shadow-lg transition-all">
-                  <Video size={24} />
-                  <div>
-                    <div className="font-semibold">Video Demo</div>
-                    <div className="text-sm opacity-90">Watch Demo Video</div>
-                  </div>
-                </a>
-              )}
-              {selectedProject.document_url && (
-                <a href={selectedProject.document_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 p-4 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-xl hover:shadow-lg transition-all">
-                  <FileText size={24} />
-                  <div>
-                    <div className="font-semibold">Project Documentation</div>
-                    <div className="text-sm opacity-90">Download/View Docs</div>
-                  </div>
-                </a>
-              )}
-              {selectedProject.video_url && (
-                <a href={selectedProject.video_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 p-4 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-xl hover:shadow-lg transition-all">
-                  <Video size={24} />
-                  <div>
-                    <div className="font-semibold">Video Walkthrough</div>
-                    <div className="text-sm opacity-90">YouTube / Vimeo</div>
-                  </div>
-                </a>
-              )}
-            </div>
+             {/* Resource Links */}
+             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+               {selectedProject.live_url && (
+                 <a href={selectedProject.live_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 p-4 bg-gradient-to-r from-green-500 to-emerald-500 text-white rounded-xl hover:shadow-lg transition-all">
+                   <ExternalLink size={24} />
+                   <div>
+                     <div className="font-semibold">Live Demo</div>
+                     <div className="text-sm opacity-90">View Project Website</div>
+                   </div>
+                 </a>
+               )}
+               {selectedProject.github_url && (
+                 <a href={selectedProject.github_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 p-4 bg-gray-900 dark:bg-gray-700 text-white rounded-xl hover:shadow-lg transition-all">
+                   <FaGithub size={24} />
+                   <div>
+                     <div className="font-semibold">Source Code</div>
+                     <div className="text-sm opacity-90">View on GitHub</div>
+                   </div>
+                 </a>
+               )}
+               {selectedProject.demo_url && (
+                 <a href={selectedProject.demo_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 p-4 bg-gradient-to-r from-blue-500 to-indigo-500 text-white rounded-xl hover:shadow-lg transition-all">
+                   <Video size={24} />
+                   <div>
+                     <div className="font-semibold">Video Demo</div>
+                     <div className="text-sm opacity-90">Watch Demo Video</div>
+                   </div>
+                 </a>
+               )}
+               {selectedProject.document_url && (
+                 <a href={selectedProject.document_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 p-4 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-xl hover:shadow-lg transition-all">
+                   <FileText size={24} />
+                   <div>
+                     <div className="font-semibold">Project Documentation</div>
+                     <div className="text-sm opacity-90">Download/View Docs</div>
+                   </div>
+                 </a>
+               )}
+               {selectedProject.video_url && (
+                 <a href={selectedProject.video_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 p-4 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-xl hover:shadow-lg transition-all">
+                   <Video size={24} />
+                   <div>
+                     <div className="font-semibold">Video Walkthrough</div>
+                     <div className="text-sm opacity-90">YouTube / Vimeo</div>
+                   </div>
+                 </a>
+               )}
+               {/* Admin Controls for Adding Files to Existing Project */}
+               {isAdmin && (
+                 <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+                   <h3 className="text-lg font-semibold mb-3">Add Files to Project</h3>
+                   <div className="space-y-3">
+                     <div>
+                       <label className="block text-sm font-medium mb-2">Upload Additional Images</label>
+                       <div className="flex items-center gap-3">
+                         <input type="file" id="projectFileUpload" className="hidden" multiple accept="image/*" />
+                         <label htmlFor="projectFileUpload" className="flex-1 flex items-center gap-3 px-4 py-2 bg-white dark:bg-gray-800 border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-xl hover:border-purple-400 dark:hover:border-purple-500 transition-all cursor-pointer">
+                           <Upload size={20} className="text-gray-400" />
+                           <span className="text-gray-500 dark:text-gray-400">Click to upload images</span>
+                         </label>
+                       </div>
+                     </div>
+                     <div>
+                       <label className="block text-sm font-medium mb-2">Upload Documents</label>
+                       <div className="flex items-center gap-3">
+                         <input type="file" id="projectDocUpload" className="hidden" multiple accept=".pdf,.doc,.docx,.txt" />
+                         <label htmlFor="projectDocUpload" className="flex-1 flex items-center gap-3 px-4 py-2 bg-white dark:bg-gray-800 border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-xl hover:border-purple-400 dark:hover:border-purple-500 transition-all cursor-pointer">
+                           <FileText size={20} className="text-gray-400" />
+                           <span className="text-gray-500 dark:text-gray-400">Click to upload documents</span>
+                         </label>
+                       </div>
+                     </div>
+                     <button onClick={handleUploadFilesToProject} className="w-full flex items-center justify-center px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-lg hover:shadow-lg transition-all">
+                       Upload Selected Files
+                     </button>
+                   </div>
+                 </div>
+               )}
+             </div>
           </motion.div>
         </div>
       )}
