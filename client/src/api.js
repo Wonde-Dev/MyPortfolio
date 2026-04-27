@@ -12,14 +12,13 @@ const api = axios.create({
 // Request interceptor to add auth token
 api.interceptors.request.use(
   (config) => {
-    // Don't add auth for multipart form data to avoid Content-Type override
-    const isMultipart = config.data instanceof FormData;
     const token = localStorage.getItem('token');
-    if (token && !isMultipart) {
+    if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
-    if (isMultipart) {
-      config.headers['Content-Type'] = 'multipart/form-data';
+    // Let browser set Content-Type for FormData (includes boundary)
+    if (config.data instanceof FormData) {
+      delete config.headers['Content-Type'];
     }
     return config;
   },

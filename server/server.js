@@ -5,6 +5,8 @@ import morgan from 'morgan';
 import compression from 'compression';
 import rateLimit from 'express-rate-limit';
 import dotenv from 'dotenv';
+import path from 'path';
+import fs from 'fs';
 import pool from './config/database.js';
 import models from './models/index.js';
 import authRoutes from './routes/authRoutes.js';
@@ -16,24 +18,11 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// Initialize all database tables
-const initializeDatabase = async () => {
-  try {
-    await models.User.createTable();
-    await models.Project.createTable();
-    await models.Contact.createTable();
-    await models.Skill.createTable();
-    await models.Testimonial.createTable();
-    
-    // Seed default skills
-    await models.Skill.seedDefaultSkills();
-    
-    console.log('✅ All database tables initialized');
-  } catch (error) {
-    console.error('❌ Database initialization failed:', error);
-    process.exit(1);
-  }
-};
+// Ensure uploads directory exists
+const uploadsDir = path.join(process.cwd(), 'uploads');
+if (!fs.existsSync(uploadsDir)) {
+  fs.mkdirSync(uploadsDir, { recursive: true });
+}
 
 // Middleware
 app.use(helmet());
@@ -41,6 +30,9 @@ app.use(compression());
 app.use(cors({ origin: process.env.CLIENT_URL || 'http://localhost:3000' }));
 app.use(express.json());
 app.use(morgan('combined'));
+
+// Serve static files from uploads directory
+app.use('/uploads', express.static(uploadsDir));
 
 // Rate limiting
 const limiter = rateLimit({

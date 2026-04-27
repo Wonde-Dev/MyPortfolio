@@ -10,7 +10,19 @@ export const useProjects = () => {
     try {
       setLoading(true);
       const response = await api.get('/api/projects');
-      setProjects(response.data);
+      // Compute type for each project based on which URL field is populated
+      const projectsWithType = response.data.map(project => {
+        let type = 'link'; // default
+        if (project.image_url) type = 'image';
+        else if (project.video_url) type = 'video';
+        else if (project.audio_url) type = 'audio';
+        else if (project.document_url) type = 'document';
+        else if (project.github_url) type = 'github';
+        else if (project.google_url) type = 'google';
+        else if (project.live_url) type = 'link';
+        return { ...project, type };
+      });
+      setProjects(projectsWithType);
       setError(null);
     } catch (err) {
       setError(err.response?.data?.message || 'Error fetching projects');
@@ -24,10 +36,14 @@ export const useProjects = () => {
 // eslint-disable-next-line react-hooks/set-state-in-effect -- Standard initialization
   }, []);
 
-  const addProject = async (projectData, token) => {
+  const addProject = async (data, token) => {
     try {
-      const response = await api.post('/api/projects', projectData, {
-        headers: { Authorization: `Bearer ${token}` }
+      const isFormData = data instanceof FormData;
+      
+      const response = await api.post('/api/projects', data, {
+        headers: isFormData 
+          ? { Authorization: `Bearer ${token}` }
+          : { Authorization: `Bearer ${token}` }
       });
       await fetchProjects();
       return { success: true, data: response.data };
@@ -36,10 +52,14 @@ export const useProjects = () => {
     }
   };
 
-  const updateProject = async (id, projectData, token) => {
+  const updateProject = async (id, data, token) => {
     try {
-      const response = await api.put(`/api/projects/${id}`, projectData, {
-        headers: { Authorization: `Bearer ${token}` }
+      const isFormData = data instanceof FormData;
+      
+      const response = await api.put(`/api/projects/${id}`, data, {
+        headers: isFormData 
+          ? { Authorization: `Bearer ${token}` }
+          : { Authorization: `Bearer ${token}` }
       });
       await fetchProjects();
       return { success: true, data: response.data };

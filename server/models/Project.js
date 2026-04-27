@@ -15,9 +15,13 @@ class Project {
         technologies TEXT,
         category VARCHAR(50),
         image_url VARCHAR(500),
+        audio_url VARCHAR(500),
+        contact_name VARCHAR(100),
+        contact_email VARCHAR(100),
         gallery_images JSON,
         live_url VARCHAR(500),
         github_url VARCHAR(500),
+        google_url VARCHAR(500),
         demo_url VARCHAR(500),
         document_url VARCHAR(500),
         video_url VARCHAR(500),
@@ -33,6 +37,29 @@ class Project {
       ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
     `;
     await this.pool.query(query);
+    
+    // Migrations for existing tables
+    try {
+      await this.pool.query(`ALTER TABLE projects ADD COLUMN IF NOT EXISTS audio_url VARCHAR(500) AFTER image_url`);
+    } catch (err) {
+      if (err.code !== 'ER_DUP_FIELDNAME' && err.errno !== 1060) throw err;
+    }
+    try {
+      await this.pool.query(`ALTER TABLE projects ADD COLUMN IF NOT EXISTS contact_name VARCHAR(100) AFTER audio_url`);
+    } catch (err) {
+      if (err.code !== 'ER_DUP_FIELDNAME' && err.errno !== 1060) throw err;
+    }
+    try {
+      await this.pool.query(`ALTER TABLE projects ADD COLUMN IF NOT EXISTS contact_email VARCHAR(100) AFTER contact_name`);
+    } catch (err) {
+      if (err.code !== 'ER_DUP_FIELDNAME' && err.errno !== 1060) throw err;
+    }
+    try {
+      await this.pool.query(`ALTER TABLE projects ADD COLUMN IF NOT EXISTS google_url VARCHAR(500) AFTER github_url`);
+    } catch (err) {
+      if (err.code !== 'ER_DUP_FIELDNAME' && err.errno !== 1060) throw err;
+    }
+    
     console.log('✅ Projects table ready');
   }
 
@@ -55,9 +82,13 @@ class Project {
       technologies = null,
       category = null,
       image_url = null,
+      audio_url = null,
+      contact_name = null,
+      contact_email = null,
       gallery_images = null,
       live_url = null,
       github_url = null,
+      google_url = null,
       demo_url = null,
       document_url = null,
       video_url = null,
@@ -71,10 +102,12 @@ class Project {
     const [result] = await this.pool.query(
       `INSERT INTO projects 
        (title, slug, description, long_description, technologies, category, 
-        image_url, gallery_images, live_url, github_url, demo_url, document_url, video_url, featured, status) 
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        image_url, audio_url, contact_name, contact_email, gallery_images, 
+        live_url, github_url, google_url, demo_url, document_url, video_url, featured, status) 
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
        [title, slug, description, long_description, technologies, category,
-        image_url, galleryJson, live_url, github_url, demo_url, document_url, video_url, featured, status]
+        image_url, audio_url, contact_name, contact_email, galleryJson,
+        live_url, github_url, google_url, demo_url, document_url, video_url, featured, status]
     );
 
     return { id: result.insertId, slug, ...projectData };
@@ -164,7 +197,8 @@ class Project {
 
     const updatableFields = [
       'title', 'description', 'long_description', 'technologies', 'category',
-      'image_url', 'live_url', 'github_url', 'demo_url', 'document_url', 'video_url', 'featured', 'status'
+      'image_url', 'audio_url', 'contact_name', 'contact_email',
+      'live_url', 'github_url', 'google_url', 'demo_url', 'document_url', 'video_url', 'featured', 'status'
     ];
 
     for (const field of updatableFields) {
@@ -184,14 +218,26 @@ class Project {
       values.push(JSON.stringify(projectData.gallery_images));
     }
 
-    if (projectData.document_url) {
-      fields.push('document_url = ?');
-      values.push(projectData.document_url);
+    if (fields.length === 0) return null;
+
+    values.push(id);
+    const [result] = await this.pool.query(
+      `UPDATE projects SET ${fields.join(', ')} WHERE id = ?`,
+      values
+    );
+
+    return result.affectedRows > 0;
+  }
     }
 
-    if (projectData.video_url) {
-      fields.push('video_url = ?');
-      values.push(projectData.video_url);
+    if (projectData.title) {
+      fields.push('slug = ?');
+      values.push(this.generateSlug(projectData.title));
+    }
+
+    if (projectData.gallery_images) {
+      fields.push('gallery_images = ?');
+      values.push(JSON.stringify(projectData.gallery_images));
     }
 
     if (fields.length === 0) return null;

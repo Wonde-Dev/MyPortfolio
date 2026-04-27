@@ -1,606 +1,772 @@
-import React, { useEffect, useState } from 'react';
-import { ExternalLink, Plus, Image, FileText, Video, Link as LinkIcon, Upload, X, Search } from 'lucide-react';
-import { FaGithub } from 'react-icons/fa6';
-import { motion } from 'framer-motion';
-import toast from 'react-hot-toast';
-import api from '../api';
-import { useNavigate, useParams } from 'react-router-dom';
-import { useTheme } from '../contexts/ThemeContext';
+import React, { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import {
+  Plus,
+  X,
+  Image,
+  Video,
+  Music,
+  FileText,
+  Link as LinkIcon,
+  Trash2,
+  Edit,
+  Upload,
+  Github,
+  Globe,
+} from "lucide-react";
+import toast from "react-hot-toast";
+import { useTheme } from "../contexts/ThemeContext";
+import { useAuth } from "../hooks/useAuth";
+import { useProjects } from "../hooks/useProjects";
 
-const Projects = () => {
-  const [projects, setProjects] = useState([]);
-  const [isAdmin, setIsAdmin] = useState(false);
-  const [showModal, setShowModal] = useState(false);
-  const [showDetailModal, setShowDetailModal] = useState(false);
-  const [selectedProject, setSelectedProject] = useState(null);
-  const [galleryIndex, setGalleryIndex] = useState(0);
-  const [categories, setCategories] = useState([]);
-  const [selectedCategory, setSelectedCategory] = useState('all');
-  const [searchTerm, setSearchTerm] = useState('');
-  const [newProject, setNewProject] = useState({
-    title: '', description: '', long_description: '', technologies: '', 
-    category: '', image_url: '', live_url: '', github_url: '', 
-    demo_url: '', document_url: '', video_url: '',
-    gallery_images: []
-  });
-  const [galleryUrls, setGalleryUrls] = useState(['']);
-  const [uploadFile, setUploadFile] = useState(null);
-  const [uploadProgress, setUploadProgress] = useState(0);
-  const navigate = useNavigate();
-  const { slug } = useParams();
-  const { getThemeStyles } = useTheme();
-  const themeStyles = getThemeStyles();
-
-  const fetchCategories = async () => {
-    try {
-      const res = await api.get('/api/projects/categories');
-      setCategories(res.data);
-    } catch (error) {
-      console.error('Error fetching categories:', error);
-    }
-  };
-
-  const fetchProjects = async () => {
-    try {
-      const res = await api.get('/api/projects');
-      setProjects(res.data);
-    } catch (error) {
-      console.error('Error fetching projects:', error);
-    }
-  };
-
-  const handleViewProject = async (projectSlug) => {
-    try {
-      const res = await api.get(`/api/projects/slug/${projectSlug}`);
-      setSelectedProject(res.data);
-      setShowDetailModal(true);
-      setGalleryIndex(0);
-    } catch (error) {
-      console.error('Error fetching project:', error);
-    }
-  };
-
-    useEffect(() => {
-      async function loadData() {
-        await fetchProjects();
-        await fetchCategories();
-        
-        const token = localStorage.getItem('token');
-        if (token) {
-          try {
-            const user = JSON.parse(atob(token.split('.')[1]));
-            if (user.role === 'admin') {
-              setIsAdmin(true);
-            }
-          } catch (error) {
-            console.error('Error parsing token:', error);
-          }
-        }
-      }
-      
-      loadData();
-    }, []); // Empty deps array is intentional for initial data fetch
-
-    useEffect(() => {
-      if (slug) {
-        handleViewProject(slug).catch(error => {
-          console.error('Error in handleViewProject effect:', error);
-        });
-      }
-    }, [slug]); // Re-run when slug changes
-
-  const handleAddProject = async (e) => {
-    e.preventDefault();
-    const token = localStorage.getItem('token');
-    try {
-      const projectData = {
-        ...newProject,
-        gallery_images: galleryUrls.filter(url => url.trim() !== '')
-      };
-      await api.post('/api/projects', projectData, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      setShowModal(false);
-      fetchProjects();
-      setNewProject({
-        title: '', description: '', long_description: '', technologies: '', 
-        category: '', image_url: '', live_url: '', github_url: '', 
-        demo_url: '', document_url: '', video_url: '',
-        gallery_images: []
-      });
-      setGalleryUrls(['']);
-           } catch (_error) {
-             console.error('Error parsing token:', _error);
-           }
-  };
-
-   const handleFileUpload = async (e) => {
-     const file = e.target.files[0];
-     if (!file) return;
-
-     // Simulate upload - in production, implement actual file upload to server
-     setUploadFile(file);
-     setUploadProgress(0);
-     
-     const interval = setInterval(() => {
-       setUploadProgress(prev => {
-         if (prev >= 100) {
-           clearInterval(interval);
-           // Add to gallery or set as main image
-           const url = URL.createObjectURL(file);
-           if (!newProject.image_url) {
-             setNewProject({...newProject, image_url: url});
-           } else {
-             setGalleryUrls([...galleryUrls.filter(u => u), url]);
-           }
-           setUploadFile(null);
-           return 0;
-         }
-         return prev + 10;
-       });
-     }, 100);
-   };
-
-   const handleUploadFilesToProject = async () => {
-     // This would typically send files to a backend endpoint
-     // For now, we'll simulate the upload and show a success message
-     const imageInput = document.getElementById('projectFileUpload');
-     const docInput = document.getElementById('projectDocUpload');
-     
-     const imageFiles = imageInput ? Array.from(imageInput.files) : [];
-     const docFiles = docInput ? Array.from(docInput.files) : [];
-     
-     if (imageFiles.length === 0 && docFiles.length === 0) {
-       toast.error('Please select files to upload');
-       return;
-     }
-     
-     // In a real app, you would send these files to your backend
-     // For now, we'll just show a success message
-     toast.success(`Uploaded ${imageFiles.length} images and ${docFiles.length} documents!`);
-     
-     // Clear the file inputs
-     if (imageInput) imageInput.value = '';
-     if (docInput) docInput.value = '';
-   };
-
-  const filteredProjects = projects.filter(project => {
-    // Filter by category
-    const matchesCategory = selectedCategory === 'all' || project.category === selectedCategory;
-    
-    // Filter by search term
-    const matchesSearch = searchTerm === '' || 
-      project.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      project.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      project.technologies?.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    return matchesCategory && matchesSearch;
-  });
-
-  return (
-    <div className={`min-h-screen pt-24 ${themeStyles.bg}`}>
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-        <div className="flex justify-between items-center mb-8">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-          >
-            <h1 className="text-5xl font-bold mb-4">My Projects</h1>
-            <p className="text-gray-600 dark:text-gray-400 max-w-2xl">
-              Explore my portfolio of web development projects. Click on any project to view details, live demo, or GitHub repository.
-            </p>
-          </motion.div>
-          {isAdmin && (
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={() => setShowModal(true)}
-              className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-lg shadow-lg"
-            >
-              <Plus size={20} /> Add Project
-            </motion.button>
-          )}
-        </div>
-
-        {/* Search and Category Filter */}
-        <motion.div
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="flex flex-wrap gap-4 mb-8"
-        >
-          <div className="flex-1 min-w-[200px]">
-            <label className="block text-sm font-medium mb-2">Search Projects</label>
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
-              <input
-                type="text"
-                placeholder="Search by title, description, or technologies..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full px-4 py-2 pl-10 rounded-lg border dark:bg-gray-800 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
-              />
-            </div>
-          </div>
-          <div>
-            <button
-              onClick={() => setSelectedCategory('all')}
-              className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${selectedCategory === 'all'
-                  ? 'bg-purple-600 text-white'
-                  : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
-                }`}
-            >
-              All Projects
-            </button>
-          </div>
-          {categories.map(cat => (
-            <button
-              key={cat}
-              onClick={() => setSelectedCategory(cat)}
-              className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${selectedCategory === cat
-                  ? 'bg-purple-600 text-white'
-                  : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
-                }`}
-            >
-              {cat}
-            </button>
-          ))}
-        </motion.div>
-
-            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {filteredProjects.map((project, index) => (
-            <motion.div
-              key={project.id}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.1 }}
-              whileHover={{ y: -5 }}
-              className={`${themeStyles.card} rounded-2xl overflow-hidden cursor-pointer group`}
-              onClick={() => handleViewProject(project.slug)}
-            >
-              <div className="h-48 overflow-hidden">
-                  {project.image_url ? (
-                    <img src={project.image_url} alt={project.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-                  ) : (
-                    <div className="w-full h-full bg-gradient-to-br from-purple-600 via-pink-600 to-blue-600 flex items-center justify-center">
-                      {/* Show placeholder images based on project title */}
-                      {project.title === "E-Commerce Platform" && (
-                        <img src="/assets/E-Commerce.jpeg" alt={project.title} className="w-full h-full object-cover" />
-                      )}
-                      {project.title === "Task Management App" && (
-                        <img src="/assets/Task Management.jpeg" alt={project.title} className="w-full h-full object-cover" />
-                      )}
-                      {project.title === "Portfolio Website" && (
-                        <img src="/assets/wonde.jpg" alt={project.title} className="w-full h-full object-cover" />
-                      )}
-                      {!project.image_url && !(
-                        project.title === "E-Commerce Platform" ||
-                        project.title === "Task Management App" ||
-                        project.title === "Portfolio Website"
-                      ) && (
-                        <span className="text-white text-4xl">🚀</span>
-                      )}
-                    </div>
-                  )}
-                </div>
-              <div className="p-6">
-                <div className="flex items-start justify-between mb-2">
-                  <h3 className="text-xl font-bold text-gray-900 dark:text-white">{project.title}</h3>
-                  {project.featured && (
-                    <span className="px-2 py-1 text-xs bg-yellow-100 dark:bg-yellow-900/30 text-yellow-600 dark:text-yellow-400 rounded-full">
-                      Featured
-                    </span>
-                  )}
-                </div>
-                <p className="text-gray-600 dark:text-gray-300 mb-3 line-clamp-2">{project.description}</p>
-                <div className="flex flex-wrap gap-2 mb-4">
-                  {project.technologies?.split(',').slice(0, 3).map((tech, idx) => (
-                    <span key={`${tech}-${idx}`} className="px-2 py-1 bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 rounded text-xs">
-                      {tech}
-                    </span>
-                  ))}
-                  {project.technologies?.split(',').length > 3 && (
-                    <span className="px-2 py-1 bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400 rounded text-xs">
-                      +{project.technologies?.split(',').length - 3} more
-                    </span>
-                  )}
-                </div>
-                <div className="flex gap-3 pt-3 border-t border-gray-100 dark:border-gray-800">
-                  {project.live_url && (
-                    <a href={project.live_url} target="_blank" rel="noopener noreferrer" 
-                       className="p-2 hover:bg-purple-100 dark:hover:bg-purple-900/50 rounded-lg transition-colors" 
-                       title="View Live Site" onClick={e => e.stopPropagation()}>
-                      <ExternalLink size={18} className="text-purple-600" />
-                    </a>
-                  )}
-                  {project.github_url && (
-                    <a href={project.github_url} target="_blank" rel="noopener noreferrer"
-                       className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-colors"
-                       title="View GitHub" onClick={e => e.stopPropagation()}>
-                      <FaGithub size={18} className="text-gray-600 dark:text-gray-400" />
-                    </a>
-                  )}
-                  {project.demo_url && (
-                    <a href={project.demo_url} target="_blank" rel="noopener noreferrer"
-                       className="p-2 hover:bg-blue-100 dark:hover:bg-blue-900/30 rounded-lg transition-colors"
-                       title="View Demo" onClick={e => e.stopPropagation()}>
-                      <Video size={18} className="text-blue-500" />
-                    </a>
-                  )}
-                </div>
-              </div>
-            </motion.div>
-          ))}
-        </div>
-      </div>
-
-      {/* Add Project Modal */}
-      {showModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 overflow-y-auto">
-          <motion.div
-            initial={{ scale: 0.9, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            className={`${themeStyles.card} rounded-2xl p-8 max-w-2xl w-full mx-auto my-8`}
-          >
-            <div className="flex justify-between items-center mb-6">
-              <h2 className="text-2xl font-bold">Add New Project</h2>
-              <button onClick={() => setShowModal(false)} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg">
-                <X size={24} />
-              </button>
-            </div>
-            <form onSubmit={handleAddProject} className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium mb-2">Title *</label>
-                  <input type="text" placeholder="Project title" value={newProject.title} onChange={(e) => setNewProject({...newProject, title: e.target.value})} className="w-full px-4 py-2 rounded-lg border dark:bg-gray-800" required />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-2">Category</label>
-                  <input type="text" placeholder="Web Development, Mobile App, etc." value={newProject.category} onChange={(e) => setNewProject({...newProject, category: e.target.value})} className="w-full px-4 py-2 rounded-lg border dark:bg-gray-800" />
-                </div>
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-2">Description *</label>
-                <textarea placeholder="Short description" value={newProject.description} onChange={(e) => setNewProject({...newProject, description: e.target.value})} className="w-full px-4 py-2 rounded-lg border dark:bg-gray-800" rows="2" required />
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-2">Long Description</label>
-                <textarea placeholder="Detailed project description" value={newProject.long_description} onChange={(e) => setNewProject({...newProject, long_description: e.target.value})} className="w-full px-4 py-2 rounded-lg border dark:bg-gray-800" rows="3" />
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-2">Technologies (comma separated)</label>
-                <input type="text" placeholder="React, Node.js, MongoDB" value={newProject.technologies} onChange={(e) => setNewProject({...newProject, technologies: e.target.value})} className="w-full px-4 py-2 rounded-lg border dark:bg-gray-800" />
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-2">Main Image URL</label>
-                <div className="flex gap-2">
-                  <input type="url" placeholder="https://..." value={newProject.image_url} onChange={(e) => setNewProject({...newProject, image_url: e.target.value})} className="flex-1 px-4 py-2 rounded-lg border dark:bg-gray-800" />
-                  <button type="button" className="px-4 py-2 bg-gray-100 dark:bg-gray-800 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700" onClick={() => document.getElementById('fileUpload').click()}>
-                    <Upload size={20} />
-                  </button>
-                  <input type="file" id="fileUpload" className="hidden" onChange={handleFileUpload} accept="image/*" />
-                </div>
-                {uploadFile && (
-                  <div className="mt-2">
-                    <div className="bg-gray-200 dark:bg-gray-700 rounded-full h-2">
-                      <div className="bg-purple-600 h-2 rounded-full transition-all" style={{width: `${uploadProgress}%`}}></div>
-                    </div>
-                    <p className="text-sm text-gray-500 mt-1">Uploading: {uploadFile.name}</p>
-                  </div>
-                )}
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-2">Gallery Images (optional)</label>
-                {galleryUrls.map((url, i) => (
-                  <div key={i} className="flex gap-2 mb-2">
-                    <input type="url" placeholder="https://..." value={url} onChange={(e) => {
-                      const newUrls = [...galleryUrls];
-                      newUrls[i] = e.target.value;
-                      setGalleryUrls(newUrls);
-                    }} className="flex-1 px-4 py-2 rounded-lg border dark:bg-gray-800" />
-                    {galleryUrls.length > 1 && (
-                      <button type="button" onClick={() => setGalleryUrls(galleryUrls.filter((_, idx) => idx !== i))} className="p-2 text-red-500 hover:bg-red-50 rounded-lg">
-                        <X size={20} />
-                      </button>
-                    )}
-                  </div>
-                ))}
-                <button type="button" onClick={() => setGalleryUrls([...galleryUrls, ''])} className="text-sm text-purple-600 hover:text-purple-700">
-                  + Add another image
-                </button>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div>
-                  <label className="block text-sm font-medium mb-2">Live URL</label>
-                  <input type="url" placeholder="https://..." value={newProject.live_url} onChange={(e) => setNewProject({...newProject, live_url: e.target.value})} className="w-full px-4 py-2 rounded-lg border dark:bg-gray-800" />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-2">GitHub URL</label>
-                  <input type="url" placeholder="https://github.com/..." value={newProject.github_url} onChange={(e) => setNewProject({...newProject, github_url: e.target.value})} className="w-full px-4 py-2 rounded-lg border dark:bg-gray-800" />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-2">Demo URL</label>
-                  <input type="url" placeholder="Video demo URL" value={newProject.demo_url} onChange={(e) => setNewProject({...newProject, demo_url: e.target.value})} className="w-full px-4 py-2 rounded-lg border dark:bg-gray-800" />
-                </div>
-              </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium mb-2">Document URL (PDF, Docs)</label>
-                  <input type="url" placeholder="https://..." value={newProject.document_url} onChange={(e) => setNewProject({...newProject, document_url: e.target.value})} className="w-full px-4 py-2 rounded-lg border dark:bg-gray-800" />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-2">Video URL</label>
-                  <input type="url" placeholder="YouTube, Vimeo, etc." value={newProject.video_url} onChange={(e) => setNewProject({...newProject, video_url: e.target.value})} className="w-full px-4 py-2 rounded-lg border dark:bg-gray-800" />
-                </div>
-              </div>
-              <div className="flex gap-3 pt-4">
-                <button type="submit" className="flex-1 px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-lg hover:shadow-lg">
-                  Add Project
-                </button>
-                <button type="button" onClick={() => setShowModal(false)} className="px-6 py-2 bg-gray-300 dark:bg-gray-700 rounded-lg hover:bg-gray-400 dark:hover:bg-gray-600">
-                  Cancel
-                </button>
-              </div>
-            </form>
-          </motion.div>
-        </div>
-      )}
-
-      {/* Project Detail Modal */}
-      {showDetailModal && selectedProject && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 overflow-y-auto">
-          <motion.div
-            initial={{ scale: 0.9, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            className={`${themeStyles.card} rounded-2xl p-8 max-w-4xl w-full mx-auto my-8 max-h-[90vh] overflow-y-auto`}
-          >
-            <div className="flex justify-between items-center mb-6">
-              <button onClick={() => { setShowDetailModal(false); navigate('/projects', { replace: true }); }} className="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg">
-                <X size={24} />
-              </button>
-            </div>
-            
-            {/* Gallery */}
-            <div className="mb-6">
-              <div className="relative h-80 bg-gray-100 dark:bg-gray-800 rounded-xl overflow-hidden">
-                {(selectedProject.gallery_images?.length > 0 || selectedProject.image_url) && (
-                  <>
-                    <motion.img
-                      key={galleryIndex}
-                      initial={{ opacity: 0, x: 50 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      exit={{ opacity: 0, x: -50 }}
-                      src={selectedProject.gallery_images?.[galleryIndex] || selectedProject.image_url}
-                      alt={selectedProject.title}
-                      className="w-full h-full object-cover"
-                    />
-                    {selectedProject.gallery_images?.length > 1 && (
-                      <>
-                        <button onClick={() => setGalleryIndex((i) => (i > 0 ? i - 1 : i))} className="absolute left-4 top-1/2 -translate-y-1/2 p-2 bg-black/50 text-white rounded-full hover:bg-black/70">
-                          ←
-                        </button>
-                        <button onClick={() => setGalleryIndex((i) => (i < selectedProject.gallery_images.length - 1 ? i + 1 : i))} className="absolute right-4 top-1/2 -translate-y-1/2 p-2 bg-black/50 text-white rounded-full hover:bg-black/70">
-                          →
-                        </button>
-                        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
-                          {selectedProject.gallery_images.map((_, i) => (
-                            <div key={i} className={`w-2 h-2 rounded-full ${i === galleryIndex ? 'bg-white' : 'bg-white/50'}`}></div>
-                          ))}
-                        </div>
-                      </>
-                    )}
-                  </>
-                )}
-                {!selectedProject.image_url && !selectedProject.gallery_images?.length && (
-                  <div className="w-full h-full flex items-center justify-center">
-                    <span className="text-6xl">🚀</span>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            <h1 className="text-4xl font-bold mb-4">{selectedProject.title}</h1>
-            
-            <div className="flex flex-wrap gap-2 mb-4">
-              {selectedProject.technologies?.split(',').map(tech => (
-                <span key={tech} className="px-3 py-1 bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 rounded-full text-sm">
-                  {tech.trim()}
-                </span>
-              ))}
-            </div>
-
-            <p className="text-gray-600 dark:text-gray-300 mb-6">{selectedProject.description}</p>
-            
-            {selectedProject.long_description && (
-              <div className="mb-6">
-                <h3 className="text-xl font-bold mb-2">About This Project</h3>
-                <p className="text-gray-600 dark:text-gray-300 whitespace-pre-line">{selectedProject.long_description}</p>
-              </div>
-            )}
-
-             {/* Resource Links */}
-             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-               {selectedProject.live_url && (
-                 <a href={selectedProject.live_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 p-4 bg-gradient-to-r from-green-500 to-emerald-500 text-white rounded-xl hover:shadow-lg transition-all">
-                   <ExternalLink size={24} />
-                   <div>
-                     <div className="font-semibold">Live Demo</div>
-                     <div className="text-sm opacity-90">View Project Website</div>
-                   </div>
-                 </a>
-               )}
-               {selectedProject.github_url && (
-                 <a href={selectedProject.github_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 p-4 bg-gray-900 dark:bg-gray-700 text-white rounded-xl hover:shadow-lg transition-all">
-                   <FaGithub size={24} />
-                   <div>
-                     <div className="font-semibold">Source Code</div>
-                     <div className="text-sm opacity-90">View on GitHub</div>
-                   </div>
-                 </a>
-               )}
-               {selectedProject.demo_url && (
-                 <a href={selectedProject.demo_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 p-4 bg-gradient-to-r from-blue-500 to-indigo-500 text-white rounded-xl hover:shadow-lg transition-all">
-                   <Video size={24} />
-                   <div>
-                     <div className="font-semibold">Video Demo</div>
-                     <div className="text-sm opacity-90">Watch Demo Video</div>
-                   </div>
-                 </a>
-               )}
-               {selectedProject.document_url && (
-                 <a href={selectedProject.document_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 p-4 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-xl hover:shadow-lg transition-all">
-                   <FileText size={24} />
-                   <div>
-                     <div className="font-semibold">Project Documentation</div>
-                     <div className="text-sm opacity-90">Download/View Docs</div>
-                   </div>
-                 </a>
-               )}
-               {selectedProject.video_url && (
-                 <a href={selectedProject.video_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-3 p-4 bg-gradient-to-r from-purple-500 to-pink-500 text-white rounded-xl hover:shadow-lg transition-all">
-                   <Video size={24} />
-                   <div>
-                     <div className="font-semibold">Video Walkthrough</div>
-                     <div className="text-sm opacity-90">YouTube / Vimeo</div>
-                   </div>
-                 </a>
-               )}
-               {/* Admin Controls for Adding Files to Existing Project */}
-               {isAdmin && (
-                 <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
-                   <h3 className="text-lg font-semibold mb-3">Add Files to Project</h3>
-                   <div className="space-y-3">
-                     <div>
-                       <label className="block text-sm font-medium mb-2">Upload Additional Images</label>
-                       <div className="flex items-center gap-3">
-                         <input type="file" id="projectFileUpload" className="hidden" multiple accept="image/*" />
-                         <label htmlFor="projectFileUpload" className="flex-1 flex items-center gap-3 px-4 py-2 bg-white dark:bg-gray-800 border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-xl hover:border-purple-400 dark:hover:border-purple-500 transition-all cursor-pointer">
-                           <Upload size={20} className="text-gray-400" />
-                           <span className="text-gray-500 dark:text-gray-400">Click to upload images</span>
-                         </label>
-                       </div>
-                     </div>
-                     <div>
-                       <label className="block text-sm font-medium mb-2">Upload Documents</label>
-                       <div className="flex items-center gap-3">
-                         <input type="file" id="projectDocUpload" className="hidden" multiple accept=".pdf,.doc,.docx,.txt" />
-                         <label htmlFor="projectDocUpload" className="flex-1 flex items-center gap-3 px-4 py-2 bg-white dark:bg-gray-800 border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-xl hover:border-purple-400 dark:hover:border-purple-500 transition-all cursor-pointer">
-                           <FileText size={20} className="text-gray-400" />
-                           <span className="text-gray-500 dark:text-gray-400">Click to upload documents</span>
-                         </label>
-                       </div>
-                     </div>
-                     <button onClick={handleUploadFilesToProject} className="w-full flex items-center justify-center px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-lg hover:shadow-lg transition-all">
-                       Upload Selected Files
-                     </button>
-                   </div>
-                 </div>
-               )}
-             </div>
-          </motion.div>
-        </div>
-      )}
-    </div>
-  );
+/* ---------------- TYPES ---------------- */
+const TYPES = {
+  all: "all",
+  image: "image",
+  video: "video",
+  audio: "audio",
+  document: "document",
+  link: "link",
+  github: "github",
+  google: "google",
 };
 
-export default Projects;
+/* ---------------- NAV ITEMS ---------------- */
+const tabs = [
+  { key: "all", label: "All", icon: <Plus size={16} /> },
+  { key: "image", label: "Images", icon: <Image size={16} /> },
+  { key: "video", label: "Videos", icon: <Video size={16} /> },
+  { key: "audio", label: "Audio", icon: <Music size={16} /> },
+  { key: "document", label: "Docs", icon: <FileText size={16} /> },
+  { key: "link", label: "Links", icon: <LinkIcon size={16} /> },
+  { key: "github", label: "GitHub", icon: <Github size={16} /> },
+  { key: "google", label: "Google", icon: <Globe size={16} /> },
+];
+
+/* ---------------- MAIN ---------------- */
+export default function Projects() {
+  const { getThemeStyles } = useTheme();
+  const theme = getThemeStyles();
+  const { user, isAdmin } = useAuth();
+  const { projects, loading, error, addProject, deleteProject, updateProject } =
+    useProjects();
+
+  const [open, setOpen] = useState(false);
+  const [editingItem, setEditingItem] = useState(null);
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [filePreview, setFilePreview] = useState(null);
+  const [uploading, setUploading] = useState(false);
+  const [form, setForm] = useState({
+    title: "",
+    description: "",
+    type: "image",
+    url: "",
+    contact_name: "",
+    contact_email: "",
+  });
+
+  const admin = isAdmin?.() || false;
+  const [activeTab, setActiveTab] = useState("all");
+
+  /* ---------------- FILTER ---------------- */
+  const filteredItems =
+    activeTab === "all" ? projects : projects.filter((i) => i.type === activeTab);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (!form.title) {
+      return toast.error("Title is required");
+    }
+
+    const token = localStorage.getItem("token");
+    if (!token) {
+      return toast.error("Authentication required");
+    }
+
+    // Helper to map type to URL field name
+    const getUrlFieldName = (type) => {
+      switch (type) {
+        case 'image': return 'image_url';
+        case 'video': return 'video_url';
+        case 'audio': return 'audio_url';
+        case 'document': return 'document_url';
+        case 'link': return 'live_url';
+        case 'github': return 'github_url';
+        case 'google': return 'google_url';
+        default: return 'url';
+      }
+    };
+
+    try {
+      setUploading(true);
+
+      if (selectedFile) {
+        // Build FormData with file (only for file types)
+        const formData = new FormData();
+        formData.append('type', form.type);
+        formData.append('file', selectedFile);
+        formData.append('title', form.title);
+        formData.append('description', form.description || '');
+
+        const result = editingItem
+          ? await updateProject(editingItem.id, formData, token)
+          : await addProject(formData, token);
+
+        if (result.success) {
+          toast.success(editingItem ? "Updated successfully" : "Added successfully");
+          resetForm();
+          setOpen(false);
+        } else {
+          toast.error(result.error || "Failed to save");
+        }
+      } else if (form.url || editingItem) {
+        // URL provided or editing existing (preserve existing URL if not changed)
+        const urlField = getUrlFieldName(form.type);
+        const projectData = {
+          title: form.title,
+          description: form.description || '',
+        };
+
+        // Add URL if provided
+        if (form.url) {
+          projectData[urlField] = form.url;
+        }
+
+        // For github/google, require contact details
+        if (form.type === 'github' || form.type === 'google') {
+          if (!form.contact_name || !form.contact_email) {
+            toast.error("Contact name and email are required");
+            setUploading(false);
+            return;
+          }
+          projectData.contact_name = form.contact_name;
+          projectData.contact_email = form.contact_email;
+        }
+
+        if (editingItem) {
+          const result = await updateProject(editingItem.id, projectData, token);
+          if (result.success) {
+            toast.success("Updated successfully");
+            resetForm();
+            setOpen(false);
+          } else {
+            toast.error(result.error || "Failed to update");
+          }
+        } else {
+          const result = await addProject(projectData, token);
+          if (result.success) {
+            toast.success("Added successfully");
+            resetForm();
+            setOpen(false);
+          } else {
+            toast.error(result.error || "Failed to add");
+          }
+        }
+      } else {
+        toast.error("Please provide a URL or upload a file");
+      }
+    } catch (error) {
+      console.error('Submit error:', error);
+      toast.error("An error occurred");
+    } finally {
+      setUploading(false);
+    }
+  };
+
+    try {
+      setUploading(true);
+
+      if (selectedFile) {
+        // Build FormData with file (type must come before file for multer)
+        const formData = new FormData();
+        formData.append('type', form.type);
+        formData.append('file', selectedFile);
+        formData.append('title', form.title);
+        formData.append('description', form.description || '');
+
+        const result = editingItem
+          ? await updateProject(editingItem.id, formData, token)
+          : await addProject(formData, token);
+
+        if (result.success) {
+          toast.success(editingItem ? "Updated successfully" : "Added successfully");
+          resetForm();
+          setOpen(false);
+        } else {
+          toast.error(result.error || "Failed to save");
+        }
+      } else if (form.url || editingItem) {
+        // URL provided or editing existing (preserve existing URL if not changed)
+        const urlField = getUrlFieldName(form.type);
+        const projectData = {
+          title: form.title,
+          description: form.description || '',
+        };
+
+        // Only add URL if provided (for new items) or keep existing if editing without URL change
+        if (form.url) {
+          projectData[urlField] = form.url;
+        }
+        // For edit without URL change, we simply don't send the URL field (preserves existing)
+
+        if (editingItem) {
+          const result = await updateProject(editingItem.id, projectData, token);
+          if (result.success) {
+            toast.success("Updated successfully");
+            resetForm();
+            setOpen(false);
+          } else {
+            toast.error(result.error || "Failed to update");
+          }
+        } else {
+          const result = await addProject(projectData, token);
+          if (result.success) {
+            toast.success("Added successfully");
+            resetForm();
+            setOpen(false);
+          } else {
+            toast.error(result.error || "Failed to add");
+          }
+        }
+      } else {
+        toast.error("Please provide a URL or upload a file");
+      }
+    } catch (error) {
+      console.error('Submit error:', error);
+      toast.error("An error occurred");
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleDelete = async (id) => {
+    if (!window.confirm("Delete this item?")) return;
+
+    const token = localStorage.getItem("token");
+    if (!token) {
+      return toast.error("Authentication required");
+    }
+
+    const result = await deleteProject(id, token);
+    if (result.success) {
+      toast.success("Deleted successfully");
+    } else {
+      toast.error(result.error || "Failed to delete");
+    }
+  };
+
+  const handleEdit = (item) => {
+    setEditingItem(item);
+    const urlField =
+      item.type === 'image' ? (item.image_url || item.url) :
+      item.type === 'video' ? (item.video_url || item.url) :
+      item.type === 'audio' ? (item.audio_url || item.url) :
+      item.type === 'document' ? (item.document_url || item.url) :
+      item.type === 'link' ? (item.live_url || item.url) :
+      item.type === 'github' ? (item.github_url || item.url) :
+      item.type === 'google' ? (item.google_url || item.url) : (item.url || '');
+
+    setForm({
+      title: item.title,
+      description: item.description || "",
+      type: item.type,
+      url: urlField,
+      contact_name: item.contact_name || "",
+      contact_email: item.contact_email || "",
+    });
+    setSelectedFile(null);
+    setFilePreview(null);
+    setOpen(true);
+  };
+
+  const resetForm = () => {
+    setForm({
+      title: "",
+      description: "",
+      type: "image",
+      url: "",
+      contact_name: "",
+      contact_email: "",
+    });
+    setEditingItem(null);
+    setSelectedFile(null);
+    setFilePreview(null);
+  };
+
+  const openAddModal = (type = null) => {
+    const defaultType = type || (activeTab !== "all" ? activeTab : "image");
+    resetForm();
+    setForm((prev) => ({ ...prev, type: defaultType }));
+    setOpen(true);
+  };
+
+  /* ---------------- FILE HANDLERS ---------------- */
+  const handleFileSelect = (e) => {
+    const file = e.target.files?.[0];
+    if (file) processFile(file);
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    const file = e.dataTransfer.files?.[0];
+    if (file) processFile(file);
+  };
+
+  const handleDragOver = (e) => {
+    e.preventDefault();
+  };
+
+  const processFile = (file) => {
+    setSelectedFile(file);
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      setFilePreview(e.target.result);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const removeFile = () => {
+    setSelectedFile(null);
+    setFilePreview(null);
+  };
+
+  /* ---------------- RENDER PREVIEW ---------------- */
+  const getItemUrl = (item) => {
+    switch (item.type) {
+      case "image": return item.image_url || item.url;
+      case "video": return item.video_url || item.url;
+      case "audio": return item.audio_url || item.url;
+      case "document": return item.document_url || item.url;
+      case "link": return item.live_url || item.url;
+      case "github": return item.github_url || item.url;
+      case "google": return item.google_url || item.url;
+      default: return item.url;
+    }
+  };
+
+  const renderPreview = (item) => {
+    const url = getItemUrl(item);
+
+    switch (item.type) {
+      case "image":
+        return url ? (
+          <img src={url} className="w-full h-40 object-cover rounded" alt={item.title} />
+        ) : <div className="w-full h-40 bg-gray-200 dark:bg-gray-700 rounded flex items-center justify-center">No image</div>;
+
+      case "video":
+        return url ? (
+          <video controls src={url} className="w-full rounded" />
+        ) : <div className="w-full h-40 bg-gray-200 dark:bg-gray-700 rounded flex items-center justify-center">No video</div>;
+
+      case "audio":
+        return url ? (
+          <audio controls src={url} className="w-full" />
+        ) : <div className="text-gray-500">No audio</div>;
+
+      case "document":
+        return url ? (
+          <a href={url} target="_blank" className="text-blue-500 flex items-center gap-2">
+            <FileText size={16} /> Open Document
+          </a>
+        ) : <div className="text-gray-500">No document</div>;
+
+      case "link":
+        return url ? (
+          <a href={url} target="_blank" className="text-green-500 flex items-center gap-2">
+            <LinkIcon size={16} /> Visit Website
+          </a>
+        ) : <div className="text-gray-500">No link</div>;
+
+      case "github":
+        return url ? (
+          <a href={url} target="_blank" className="text-gray-800 flex items-center gap-2">
+            <Github size={16} /> View GitHub
+          </a>
+        ) : <div className="text-gray-500">No GitHub link</div>;
+
+      case "google":
+        return url ? (
+          <a href={url} target="_blank" className="text-blue-500 flex items-center gap-2">
+            <Globe size={16} /> Google
+          </a>
+        ) : <div className="text-gray-500">No Google link</div>;
+
+      default:
+        return null;
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className={`min-h-screen pt-28 p-6 ${theme.bg} flex items-center justify-center`}>
+        <p className="text-xl">Loading...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className={`min-h-screen pt-28 p-6 ${theme.bg} flex items-center justify-center`}>
+        <p className="text-xl text-red-500">{error}</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className={`min-h-screen pt-28 p-6 ${theme.bg}`}>
+      {/* HEADER */}
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-4xl font-bold">Media Hub</h1>
+
+        {admin && (
+          <button
+            onClick={() => openAddModal()}
+            className="bg-purple-600 text-white px-4 py-2 rounded-lg flex items-center gap-2"
+          >
+            <Plus size={20} />
+            Add Item
+          </button>
+        )}
+      </div>
+
+      {/* QUICK ADD BUTTONS */}
+      {admin && (
+        <div className="flex gap-2 flex-wrap mb-6">
+          <button
+            onClick={() => openAddModal("image")}
+            className="flex items-center gap-2 px-3 py-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200"
+          >
+            <Image size={16} />
+            Add Image
+          </button>
+          <button
+            onClick={() => openAddModal("video")}
+            className="flex items-center gap-2 px-3 py-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200"
+          >
+            <Video size={16} />
+            Add Video
+          </button>
+          <button
+            onClick={() => openAddModal("audio")}
+            className="flex items-center gap-2 px-3 py-2 bg-green-100 text-green-700 rounded-lg hover:bg-green-200"
+          >
+            <Music size={16} />
+            Add Audio
+          </button>
+          <button
+            onClick={() => openAddModal("document")}
+            className="flex items-center gap-2 px-3 py-2 bg-yellow-100 text-yellow-700 rounded-lg hover:bg-yellow-200"
+          >
+            <FileText size={16} />
+            Add Document
+          </button>
+          <button
+            onClick={() => openAddModal("link")}
+            className="flex items-center gap-2 px-3 py-2 bg-purple-100 text-purple-700 rounded-lg hover:bg-purple-200"
+          >
+            <LinkIcon size={16} />
+            Add Link
+          </button>
+          <button
+            onClick={() => openAddModal("github")}
+            className="flex items-center gap-2 px-3 py-2 bg-gray-800 text-white rounded-lg hover:bg-gray-900"
+          >
+            <Github size={16} />
+            Add GitHub
+          </button>
+          <button
+            onClick={() => openAddModal("google")}
+            className="flex items-center gap-2 px-3 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
+          >
+            <Globe size={16} />
+            Add Google
+          </button>
+        </div>
+      )}
+
+      {/* NAVBAR TABS */}
+      <div className="flex gap-2 flex-wrap mb-6">
+        {tabs.map((tab) => (
+          <button
+            key={tab.key}
+            onClick={() => setActiveTab(tab.key)}
+            className={`flex items-center gap-2 px-3 py-2 rounded-full text-sm ${
+              activeTab === tab.key
+                ? "bg-purple-600 text-white"
+                : "bg-gray-200 dark:bg-gray-800"
+            }`}
+          >
+            {tab.icon}
+            {tab.label}
+          </button>
+        ))}
+      </div>
+
+      {/* GRID */}
+      <div className="grid md:grid-cols-3 gap-6">
+        {filteredItems.map((item) => (
+          <motion.div
+            key={item.id}
+            whileHover={{ y: -6 }}
+            className="bg-white dark:bg-gray-900 rounded-xl p-4 shadow relative group"
+          >
+            <div className="flex justify-between items-start">
+              <div className="flex-1">
+                <h2 className="font-bold">{item.title}</h2>
+                <p className="text-sm text-gray-500">{item.description}</p>
+                <p className="text-xs text-gray-400 mt-1">
+                  {new Date(item.createdAt).toLocaleString()}
+                </p>
+              </div>
+              {admin && (
+                <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <button
+                    onClick={() => handleEdit(item)}
+                    className="p-1 text-blue-500 hover:bg-blue-50 rounded"
+                  >
+                    <Edit size={16} />
+                  </button>
+                  <button
+                    onClick={() => handleDelete(item.id)}
+                    className="p-1 text-red-500 hover:bg-red-50 rounded"
+                  >
+                    <Trash2 size={16} />
+                  </button>
+                </div>
+              )}
+            </div>
+
+            <div className="mt-3">{renderPreview(item)}</div>
+          </motion.div>
+        ))}
+      </div>
+
+      {/* EMPTY STATE */}
+      {filteredItems.length === 0 && (
+        <div className="text-center py-12 text-gray-500">
+          No items found. Add one to get started!
+        </div>
+      )}
+
+      {/* MODAL */}
+      <AnimatePresence>
+        {open && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/60 flex items-center justify-center p-4 z-50"
+            onClick={(e) => e.target === e.currentTarget && setOpen(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="bg-white dark:bg-gray-900 p-6 rounded-xl w-full max-w-md"
+            >
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-xl font-bold">
+                  {editingItem ? "Edit Item" : "Add Media Item"}
+                </h2>
+                <button
+                  onClick={() => {
+                    setOpen(false);
+                    resetForm();
+                  }}
+                  className="p-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded"
+                >
+                  <X size={20} />
+                </button>
+              </div>
+
+              <form onSubmit={handleSubmit}>
+                {/* TITLE */}
+                <input
+                  placeholder="Title"
+                  className="w-full border p-2 mb-2 rounded dark:bg-gray-800 dark:border-gray-700"
+                  value={form.title}
+                  onChange={(e) => setForm({ ...form, title: e.target.value })}
+                  required
+                />
+
+                {/* DESCRIPTION */}
+                <textarea
+                  placeholder="Description"
+                  className="w-full border p-2 mb-2 rounded dark:bg-gray-800 dark:border-gray-700"
+                  value={form.description}
+                  onChange={(e) => setForm({ ...form, description: e.target.value })}
+                  rows={3}
+                />
+
+                {/* TYPE SELECT */}
+                <select
+                  className="w-full border p-2 mb-2 rounded dark:bg-gray-800 dark:border-gray-700"
+                  value={form.type}
+                  onChange={(e) => {
+                    const newType = e.target.value;
+                    setForm({ ...form, type: newType });
+                    // Clear file when type changes (file may not match new type)
+                    if (selectedFile) {
+                      removeFile();
+                    }
+                    // Clear contact fields when not social
+                    if (newType !== 'github' && newType !== 'google') {
+                      setForm(prev => ({ ...prev, contact_name: "", contact_email: "" }));
+                    }
+                  }}
+                >
+                  <option value="image">Image</option>
+                  <option value="video">Video</option>
+                  <option value="audio">Audio</option>
+                  <option value="document">Document</option>
+                  <option value="link">Link</option>
+                  <option value="github">GitHub</option>
+                  <option value="google">Google</option>
+                </select>
+
+                {/* FILE UPLOAD - hidden for link and social types */}
+                {!['link', 'github', 'google'].includes(form.type) && (
+                  <div className="mb-2">
+                    <label className="block text-sm font-medium mb-1">
+                      Upload File
+                    </label>
+                    <div
+                      className="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-lg p-4 text-center hover:border-purple-500 transition-colors"
+                      onDrop={handleDrop}
+                      onDragOver={handleDragOver}
+                    >
+                      <input
+                        type="file"
+                        id="file-upload"
+                        accept={
+                          form.type === 'image' ? 'image/*' :
+                          form.type === 'video' ? 'video/*' :
+                          form.type === 'audio' ? 'audio/*' :
+                          '.pdf,.doc,.docx,.txt'
+                        }
+                        onChange={handleFileSelect}
+                        className="hidden"
+                      />
+                      <label htmlFor="file-upload" className="cursor-pointer">
+                        {filePreview ? (
+                          <div className="relative">
+                            {form.type === 'image' && (
+                              <img src={filePreview} alt="Preview" className="max-h-40 mx-auto rounded" />
+                            )}
+                            {form.type === 'video' && (
+                              <video src={filePreview} className="max-h-40 mx-auto rounded" controls />
+                            )}
+                            {form.type === 'audio' && (
+                              <div className="flex flex-col items-center">
+                                <Music size={40} className="text-purple-500 mb-2" />
+                                <audio src={filePreview} className="w-full" controls />
+                              </div>
+                            )}
+                            {form.type === 'document' && (
+                              <div className="text-sm text-gray-500 flex flex-col items-center">
+                                <FileText size={40} className="mb-2" />
+                                {selectedFile?.name}
+                              </div>
+                            )}
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.preventDefault();
+                                removeFile();
+                              }}
+                              className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1"
+                            >
+                              <X size={16} />
+                            </button>
+                          </div>
+                        ) : (
+                          <div className="text-gray-500">
+                            <Upload className="mx-auto mb-2" size={24} />
+                            <p>Click to upload or drag and drop</p>
+                            <p className="text-xs mt-1">
+                              {form.type === 'image' && 'PNG, JPG, GIF, WEBP'}
+                              {form.type === 'video' && 'MP4, WEBM, MOV'}
+                              {form.type === 'audio' && 'MP3, WAV, OGG'}
+                              {form.type === 'document' && 'PDF, DOC, DOCX, TXT'}
+                            </p>
+                          </div>
+                        )}
+                      </label>
+                    </div>
+                  </div>
+                )}
+
+                {/* URL INPUT */}
+                <div className="mb-2">
+                  <label className="block text-sm font-medium mb-1">
+                    {form.type === 'link' ? 'Website URL' : 
+                     form.type === 'github' ? 'GitHub Profile URL' :
+                     form.type === 'google' ? 'Google Profile URL' :
+                     'Or paste URL (optional if uploading file)'}
+                  </label>
+                  <input
+                    placeholder={
+                      form.type === 'link' ? 'https://example.com' :
+                      form.type === 'github' ? 'https://github.com/username' :
+                      form.type === 'google' ? 'https://plus.google.com/...' :
+                      form.type === 'image' ? 'https://example.com/image.jpg' :
+                      form.type === 'video' ? 'https://example.com/video.mp4' :
+                      form.type === 'audio' ? 'https://example.com/audio.mp3' :
+                      'https://example.com/doc.pdf'
+                    }
+                    className="w-full border p-2 mb-2 rounded dark:bg-gray-800 dark:border-gray-700"
+                    value={form.url}
+                    onChange={(e) => setForm({ ...form, url: e.target.value })}
+                  />
+                </div>
+
+                {/* CONTACT FIELDS - required for social links */}
+                {(form.type === 'github' || form.type === 'google') && (
+                  <>
+                    <input
+                      placeholder="Contact Name"
+                      className="w-full border p-2 mb-2 rounded dark:bg-gray-800 dark:border-gray-700"
+                      value={form.contact_name}
+                      onChange={(e) => setForm({ ...form, contact_name: e.target.value })}
+                      required
+                    />
+                    <input
+                      placeholder="Contact Email"
+                      type="email"
+                      className="w-full border p-2 mb-2 rounded dark:bg-gray-800 dark:border-gray-700"
+                      value={form.contact_email}
+                      onChange={(e) => setForm({ ...form, contact_email: e.target.value })}
+                      required
+                    />
+                  </>
+                )}
+
+                {/* ACTIONS */}
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setOpen(false);
+                      resetForm();
+                    }}
+                    className="flex-1 border p-2 rounded hover:bg-gray-50 dark:hover:bg-gray-800"
+                    disabled={uploading}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    className="flex-1 bg-purple-600 text-white p-2 rounded hover:bg-purple-700 disabled:opacity-50"
+                    disabled={uploading}
+                  >
+                    {uploading ? 'Uploading...' : (editingItem ? "Update" : "Save")}
+                  </button>
+                </div>
+              </form>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
