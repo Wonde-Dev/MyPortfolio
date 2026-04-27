@@ -201,37 +201,7 @@ const Contact = () => {
                 </p>
               </div>
 
-              <div className="mt-6">
-                <h3 className="text-lg font-semibold mb-4">Attach Files (Optional)</h3>
-                <div className="space-y-4">
-                  <div className="flex items-center gap-4 p-4 bg-gray-50 dark:bg-gray-800/50 rounded-xl">
-                    <input type="file" id="fileUpload" className="hidden" onChange={handleFileUpload} accept=".pdf,.doc,.docx,.txt,.jpg,.jpeg,.png,.mp4,.mov,.zip" multiple />
-                    <button type="button" onClick={() => { if (!isSubmitting) document.getElementById('fileUpload').click(); }}
-                      className={`flex-1 flex items-center gap-3 px-4 py-3 bg-white dark:bg-gray-800 border-2 border-dashed border-gray-300 dark:border-gray-700 rounded-xl hover:border-purple-400 dark:hover:border-purple-500 transition-all ${isSubmitting ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}>
-                      <Upload size={24} className="text-gray-400" />
-                      <span className="text-gray-500 dark:text-gray-400">
-                        {attachedFiles.length > 0 ? `${attachedFiles.length} file(s) selected` : 'Click to upload documents, images, videos, or ZIP files'}
-                      </span>
-                    </button>
-                   </div>
-                  {attachedFiles.length > 0 && (
-                    <div className="space-y-2">
-                      {attachedFiles.map((file, index) => (
-                        <div key={index} className="flex items-center justify-between p-3 bg-white dark:bg-gray-800 rounded-lg border">
-                          <div className="flex items-center gap-3">
-                            <FileText size={20} className="text-purple-600" />
-                            <span className="text-sm text-gray-600 dark:text-gray-400">{file.name}</span>
-                            <span className="text-xs text-gray-400">({(file.size / 1024).toFixed(1)} KB)</span>
-                          </div>
-                          <button type="button" onClick={() => handleRemoveFile(index)} className="text-red-500 hover:text-red-700">
-                            <X size={20} />
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </div>
+
             </div>
 
              <div className={`${themeStyles.card} rounded-2xl p-8`}>

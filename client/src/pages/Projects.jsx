@@ -222,7 +222,7 @@ const Projects = () => {
           ))}
         </motion.div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {filteredProjects.map((project, index) => (
             <motion.div
               key={project.id}
@@ -233,15 +233,15 @@ const Projects = () => {
               className={`${themeStyles.card} rounded-2xl overflow-hidden cursor-pointer group`}
               onClick={() => handleViewProject(project.slug)}
             >
-              <div className="h-48 overflow-hidden">
-                {project.image_url ? (
-                  <img src={project.image_url} alt={project.title} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300" />
-                ) : (
-                  <div className="w-full h-full bg-gradient-to-br from-purple-600 via-pink-600 to-blue-600 flex items-center justify-center">
-                    <span className="text-white text-4xl">🚀</span>
-                  </div>
-                )}
-              </div>
+             <div className="h-48 overflow-hidden">
+                 {project.image_url ? (
+                   <img src={project.image_url} alt={project.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                 ) : (
+                   <div className="w-full h-full bg-gradient-to-br from-purple-600 via-pink-600 to-blue-600 flex items-center justify-center">
+                     <span className="text-white text-4xl">🚀</span>
+                   </div>
+                 )}
+               </div>
               <div className="p-6">
                 <div className="flex items-start justify-between mb-2">
                   <h3 className="text-xl font-bold text-gray-900 dark:text-white">{project.title}</h3>
