@@ -64,24 +64,24 @@ const Services = () => {
           </p>
         </motion.div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {services.map((service, index) => (
-            <motion.div
-              key={index}
-              initial={{ opacity: 0, y: 30 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.1 }}
-              whileHover={{ y: -10 }}
-              className={`${themeStyles.card} rounded-2xl p-8 text-center transition-all duration-300 cursor-pointer group`}
-            >
-              <div className={`inline-flex p-4 rounded-2xl bg-gradient-to-r ${service.color} mb-6 group-hover:scale-110 transition-transform duration-300`}>
-                <div className="text-white">{service.icon}</div>
-              </div>
-              <h3 className="text-xl font-bold mb-3">{service.title}</h3>
-              <p className="text-gray-600 dark:text-gray-300">{service.description}</p>
-            </motion.div>
-          ))}
-        </div>
+         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+           {services.map((service, index) => (
+             <motion.div
+               key={`service-${index}-${service.title}`}
+               initial={{ opacity: 0, y: 30 }}
+               animate={{ opacity: 1, y: 0 }}
+               transition={{ delay: index * 0.1 }}
+               whileHover={{ y: -10 }}
+               className={`${themeStyles.card} rounded-2xl p-8 text-center transition-all duration-300 cursor-pointer group`}
+             >
+               <div className={`inline-flex p-4 rounded-2xl bg-gradient-to-r ${service.color} mb-6 group-hover:scale-110 transition-transform duration-300`}>
+                 <div className="text-white">{service.icon}</div>
+               </div>
+               <h3 className="text-xl font-bold mb-3">{service.title}</h3>
+               <p className="text-gray-600 dark:text-gray-300">{service.description}</p>
+             </motion.div>
+           ))}
+         </div>
 
         {/* Process Section */}
         <motion.div

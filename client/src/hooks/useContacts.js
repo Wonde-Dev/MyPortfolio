@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import axios from 'axios';
+import api from '../api';
 
 export const useContact = () => {
   const [loading, setLoading] = useState(false);
@@ -9,7 +9,7 @@ export const useContact = () => {
     try {
       setLoading(true);
       setError(null);
-      const response = await axios.post('http://localhost:5000/api/contact', formData);
+      const response = await api.post('/api/contact', formData);
       return { success: true, data: response.data };
     } catch (err) {
       const errorMsg = err.response?.data?.message || 'Error sending message';

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import axios from 'axios';
+import api from '../api';
 
 export const useProjects = () => {
   const [projects, setProjects] = useState([]);
@@ -9,7 +9,7 @@ export const useProjects = () => {
   const fetchProjects = async () => {
     try {
       setLoading(true);
-      const response = await axios.get('http://localhost:5000/api/projects');
+      const response = await api.get('/api/projects');
       setProjects(response.data);
       setError(null);
     } catch (err) {
@@ -21,11 +21,12 @@ export const useProjects = () => {
 
   useEffect(() => {
     fetchProjects();
+// eslint-disable-next-line react-hooks/set-state-in-effect -- Standard initialization
   }, []);
 
   const addProject = async (projectData, token) => {
     try {
-      const response = await axios.post('http://localhost:5000/api/projects', projectData, {
+      const response = await api.post('/api/projects', projectData, {
         headers: { Authorization: `Bearer ${token}` }
       });
       await fetchProjects();
@@ -37,7 +38,7 @@ export const useProjects = () => {
 
   const updateProject = async (id, projectData, token) => {
     try {
-      const response = await axios.put(`http://localhost:5000/api/projects/${id}`, projectData, {
+      const response = await api.put(`/api/projects/${id}`, projectData, {
         headers: { Authorization: `Bearer ${token}` }
       });
       await fetchProjects();
@@ -49,7 +50,7 @@ export const useProjects = () => {
 
   const deleteProject = async (id, token) => {
     try {
-      await axios.delete(`http://localhost:5000/api/projects/${id}`, {
+      await api.delete(`/api/projects/${id}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       await fetchProjects();

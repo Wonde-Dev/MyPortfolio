@@ -46,7 +46,7 @@ const Navbar = () => {
                 transition={{ type: "spring", stiffness: 300 }}
                 className="cursor-pointer"
               >
-                <div className="w-25 h-12 rounded-xl overflow-hidden border border-gray-200 shadow-md hover:shadow-xl transition-shadow duration-300">
+                <div className="w-30 h-12 rounded-xl overflow-hidden border border-gray-200 shadow-md hover:shadow-xl transition-shadow duration-300">
                   <img
                     src={logo}
                     alt="Brand Logo"

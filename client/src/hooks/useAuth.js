@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import axios from 'axios';
+import api from '../api';
 
 export const useAuth = () => {
   const [user, setUser] = useState(null);
@@ -14,16 +14,15 @@ export const useAuth = () => {
     }
 
     try {
-      const response = await axios.get('http://localhost:5000/api/auth/verify', {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      const response = await api.get('/api/auth/verify');
       
       if (response.data.valid) {
-        const userData = JSON.parse(localStorage.getItem('user') || '{}');
+        const userData = response.data.user;
         setUser(userData);
         setIsAuthenticated(true);
+        localStorage.setItem('user', JSON.stringify(userData));
       }
-    } catch (error) {
+    } catch {
       localStorage.removeItem('token');
       localStorage.removeItem('user');
     } finally {
@@ -33,11 +32,12 @@ export const useAuth = () => {
 
   useEffect(() => {
     checkAuth();
+// eslint-disable-next-line react-hooks/set-state-in-effect -- Standard initialization
   }, []);
 
   const login = async (email, password) => {
     try {
-      const response = await axios.post('http://localhost:5000/api/auth/login', { email, password });
+      const response = await api.post('/api/auth/login', { email, password });
       const { token, user } = response.data;
       
       localStorage.setItem('token', token);

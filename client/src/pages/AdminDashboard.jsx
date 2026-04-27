@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
 import { Users, FolderGit2, Mail, LogOut, Edit, Trash2, Eye } from 'lucide-react';
-import axios from 'axios';
+import api from '../api';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { useTheme } from '../contexts/ThemeContext';
@@ -20,9 +19,8 @@ const AdminDashboard = () => {
   }, []);
 
   const fetchData = async () => {
-    const token = localStorage.getItem('token');
     try {
-      const projectsRes = await axios.get('http://localhost:5000/api/projects');
+      const projectsRes = await api.get('/api/projects');
       setProjects(projectsRes.data);
       setStats(prev => ({ ...prev, projects: projectsRes.data.length }));
     } catch (error) {
@@ -34,7 +32,7 @@ const AdminDashboard = () => {
     const token = localStorage.getItem('token');
     if (window.confirm('Are you sure you want to delete this project?')) {
       try {
-        await axios.delete(`http://localhost:5000/api/projects/${id}`, {
+        await api.delete(`/api/projects/${id}`, {
           headers: { Authorization: `Bearer ${token}` }
         });
         toast.success('Project deleted successfully');

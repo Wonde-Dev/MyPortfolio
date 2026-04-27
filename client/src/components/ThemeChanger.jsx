@@ -1,7 +1,8 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { Moon, Sun, Sparkles } from 'lucide-react';
+import React from 'react';
+// eslint-disable-next-line no-unused-vars
 import { motion } from 'framer-motion';
 import { useTheme } from '../contexts/ThemeContext';
+import { Moon, Sun, Sparkles } from 'lucide-react';
 
 const ThemeChanger = () => {
   const { theme, cycleTheme, themes } = useTheme();

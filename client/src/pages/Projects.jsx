@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
-import { ExternalLink, Plus, Image, FileText, Video, Link as LinkIcon, Upload, X } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { ExternalLink, Plus, Image, FileText, Video, Link as LinkIcon, Upload, X, Search } from 'lucide-react';
 import { FaGithub } from 'react-icons/fa6';
-import axios from 'axios';
+import { motion } from 'framer-motion';
+import api from '../api';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useTheme } from '../contexts/ThemeContext';
 
@@ -15,6 +15,7 @@ const Projects = () => {
   const [galleryIndex, setGalleryIndex] = useState(0);
   const [categories, setCategories] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState('all');
+  const [searchTerm, setSearchTerm] = useState('');
   const [newProject, setNewProject] = useState({
     title: '', description: '', long_description: '', technologies: '', 
     category: '', image_url: '', live_url: '', github_url: '', 
@@ -29,28 +30,9 @@ const Projects = () => {
   const { getThemeStyles } = useTheme();
   const themeStyles = getThemeStyles();
 
-  useEffect(() => {
-    fetchProjects();
-    fetchCategories();
-    const token = localStorage.getItem('token');
-    if (token) {
-      try {
-        const user = JSON.parse(atob(token.split('.')[1]));
-        if (user.role === 'admin') setIsAdmin(true);
-      } catch (e) {}
-    }
-  }, []);
-
-  useEffect(() => {
-    // If viewing by slug, open detail modal
-    if (slug) {
-      handleViewProject(slug);
-    }
-  }, [slug]);
-
   const fetchCategories = async () => {
     try {
-      const res = await axios.get('http://localhost:5000/api/projects/categories');
+      const res = await api.get('/api/projects/categories');
       setCategories(res.data);
     } catch (error) {
       console.error('Error fetching categories:', error);
@@ -59,7 +41,7 @@ const Projects = () => {
 
   const fetchProjects = async () => {
     try {
-      const res = await axios.get('http://localhost:5000/api/projects');
+      const res = await api.get('/api/projects');
       setProjects(res.data);
     } catch (error) {
       console.error('Error fetching projects:', error);
@@ -68,7 +50,7 @@ const Projects = () => {
 
   const handleViewProject = async (projectSlug) => {
     try {
-      const res = await axios.get(`http://localhost:5000/api/projects/slug/${projectSlug}`);
+      const res = await api.get(`/api/projects/slug/${projectSlug}`);
       setSelectedProject(res.data);
       setShowDetailModal(true);
       setGalleryIndex(0);
@@ -76,6 +58,35 @@ const Projects = () => {
       console.error('Error fetching project:', error);
     }
   };
+
+    useEffect(() => {
+      async function loadData() {
+        await fetchProjects();
+        await fetchCategories();
+        
+        const token = localStorage.getItem('token');
+        if (token) {
+          try {
+            const user = JSON.parse(atob(token.split('.')[1]));
+            if (user.role === 'admin') {
+              setIsAdmin(true);
+            }
+          } catch (_error) {
+            // Handle token parsing error
+          }
+        }
+      }
+      
+      loadData();
+    }, []); // Empty deps array is intentional for initial data fetch
+
+    useEffect(() => {
+      if (slug) {
+        handleViewProject(slug).catch(error => {
+          console.error('Error in handleViewProject effect:', error);
+        });
+      }
+    }, [slug]); // Re-run when slug changes
 
   const handleAddProject = async (e) => {
     e.preventDefault();
@@ -85,7 +96,7 @@ const Projects = () => {
         ...newProject,
         gallery_images: galleryUrls.filter(url => url.trim() !== '')
       };
-      await axios.post('http://localhost:5000/api/projects', projectData, {
+      await api.post('/api/projects', projectData, {
         headers: { Authorization: `Bearer ${token}` }
       });
       setShowModal(false);
@@ -129,9 +140,18 @@ const Projects = () => {
     }, 100);
   };
 
-  const filteredProjects = selectedCategory === 'all' 
-    ? projects 
-    : projects.filter(p => p.category === selectedCategory);
+  const filteredProjects = projects.filter(project => {
+    // Filter by category
+    const matchesCategory = selectedCategory === 'all' || project.category === selectedCategory;
+    
+    // Filter by search term
+    const matchesSearch = searchTerm === '' || 
+      project.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      project.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      project.technologies?.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    return matchesCategory && matchesSearch;
+  });
 
   return (
     <div className={`min-h-screen pt-24 ${themeStyles.bg}`}>
@@ -158,21 +178,36 @@ const Projects = () => {
           )}
         </div>
 
-        {/* Category Filter */}
+        {/* Search and Category Filter */}
         <motion.div
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="flex flex-wrap gap-2 mb-8"
+          className="flex flex-wrap gap-4 mb-8"
         >
-          <button
-            onClick={() => setSelectedCategory('all')}
-            className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${selectedCategory === 'all'
-                ? 'bg-purple-600 text-white'
-                : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
-              }`}
-          >
-            All Projects
-          </button>
+          <div className="flex-1 min-w-[200px]">
+            <label className="block text-sm font-medium mb-2">Search Projects</label>
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+              <input
+                type="text"
+                placeholder="Search by title, description, or technologies..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="w-full px-4 py-2 pl-10 rounded-lg border dark:bg-gray-800 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+              />
+            </div>
+          </div>
+          <div>
+            <button
+              onClick={() => setSelectedCategory('all')}
+              className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${selectedCategory === 'all'
+                  ? 'bg-purple-600 text-white'
+                  : 'bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700'
+                }`}
+            >
+              All Projects
+            </button>
+          </div>
           {categories.map(cat => (
             <button
               key={cat}
@@ -187,7 +222,7 @@ const Projects = () => {
           ))}
         </motion.div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredProjects.map((project, index) => (
             <motion.div
               key={project.id}
@@ -218,8 +253,8 @@ const Projects = () => {
                 </div>
                 <p className="text-gray-600 dark:text-gray-300 mb-3 line-clamp-2">{project.description}</p>
                 <div className="flex flex-wrap gap-2 mb-4">
-                  {project.technologies?.split(',').slice(0, 3).map(tech => (
-                    <span key={tech} className="px-2 py-1 bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 rounded text-xs">
+                  {project.technologies?.split(',').slice(0, 3).map((tech, idx) => (
+                    <span key={`${tech}-${idx}`} className="px-2 py-1 bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400 rounded text-xs">
                       {tech}
                     </span>
                   ))}

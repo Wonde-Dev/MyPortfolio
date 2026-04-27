@@ -1,22 +1,22 @@
 import React from 'react';
-import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
-import { 
-   Mail, 
-   Phone, 
-   MapPin, 
-   Heart 
-  } from 'lucide-react'; // Keep lucide for basic icons
+import { motion } from 'framer-motion';
+import {
+    Mail,
+    Phone,
+    MapPin,
+    Heart
+   } from 'lucide-react'; // Keep lucide for basic icons
 
 // Import from react-icons (more reliable for social media)
-import { 
-   FaGithub, 
-   FaLinkedin, 
-   FaTwitter, 
-   FaInstagram,
-   FaFacebook,
-   FaYoutube 
-  } from 'react-icons/fa';
+import {
+    FaGithub,
+    FaLinkedin,
+    FaTwitter,
+    FaInstagram,
+    FaFacebook,
+    FaYoutube
+   } from 'react-icons/fa';
 
 import { useLanguage } from '../contexts/LanguageContext';
 import { useTheme } from '../contexts/ThemeContext';
@@ -29,7 +29,7 @@ const Footer = () => {
    const socialLinks = [
       { icon: FaGithub, url: 'https://github.com/wonde-dev', label: 'GitHub', color: 'hover:text-gray-900 dark:hover:text-white' },
       { icon: FaLinkedin, url: 'https://linkedin.com/in/wonde-tech2026', label: 'LinkedIn', color: 'hover:text-blue-600' },
-      { icon: FaTwitter, url: 'https://twitter.com/wondwosen', label: 'Twitter', color: 'hover:text-blue-400' },
+      { icon: FaTwitter, url: 'https://twitter.com/Wonde_dev2026', label: 'Twitter', color: 'hover:text-blue-400' },
       { icon: FaInstagram, url: 'https://instagram.com/wondwosen', label: 'Instagram', color: 'hover:text-pink-600' },
    ];
 
@@ -72,21 +72,21 @@ const Footer = () => {
               Building exceptional digital experiences with code and creativity. 
               Full-Stack Developer & Creative Designer.
             </p>
-            <div className="flex gap-4 mt-6">
-              {socialLinks.map((social, index) => (
-                <motion.a
-                  key={social.label}
-                  href={social.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  whileHover={{ scale: 1.1, y: -3 }}
-                  whileTap={{ scale: 0.95 }}
-                  className={`p-2 rounded-full bg-gray-200 dark:bg-gray-800 hover:bg-gray-300 dark:hover:bg-gray-700 transition-all duration-300 ${social.color}`}
-                >
-                  <social.icon size={20} />
-                </motion.a>
-              ))}
-            </div>
+             <div className="flex gap-4 mt-6">
+               {socialLinks.map((social, _index) => (
+                 <motion.a
+                   key={`${social.label}-${_index}`}
+                   href={social.url}
+                   target="_blank"
+                   rel="noopener noreferrer"
+                   whileHover={{ scale: 1.1, y: -3 }}
+                   whileTap={{ scale: 0.95 }}
+                   className={`p-2 rounded-full bg-gray-200 dark:bg-gray-800 hover:bg-gray-300 dark:hover:bg-gray-700 transition-all duration-300 ${social.color}`}
+                 >
+                   <social.icon size={20} />
+                 </motion.a>
+               ))}
+             </div>
           </motion.div>
 
            {/* Quick Links */}
@@ -98,7 +98,7 @@ const Footer = () => {
            >
              <h3 className="text-lg font-semibold mb-4">Quick Links</h3>
              <ul className="space-y-2">
-               {quickLinks.map((link, index) => (
+                {quickLinks.map((link, _index) => (
                  <li key={link.path}>
                    <Link
                      to={link.path}
@@ -149,14 +149,14 @@ const Footer = () => {
             <div className="space-y-3">
               <div className="flex items-center gap-3 text-sm text-gray-600 dark:text-gray-400 group">
                 <Mail size={16} className="text-purple-600 group-hover:scale-110 transition-transform" />
-                <a href="mailto:wondwosen@example.com" className="hover:text-purple-600 transition-colors">
-                  wondwosen@example.com
+                <a href="mailto:wondedev369@gmail.com" className="hover:text-purple-600 transition-colors">
+                  wondedev369@gmail.com
                 </a>
               </div>
               <div className="flex items-center gap-3 text-sm text-gray-600 dark:text-gray-400 group">
                 <Phone size={16} className="text-purple-600 group-hover:scale-110 transition-transform" />
-                <a href="tel:+251912345678" className="hover:text-purple-600 transition-colors">
-                  +251 912 345 678
+                <a href="tel:+251970461252" className="hover:text-purple-600 transition-colors">
+                  +251 970 461 252
                 </a>
               </div>
               <div className="flex items-center gap-3 text-sm text-gray-600 dark:text-gray-400">
@@ -164,7 +164,7 @@ const Footer = () => {
                 <span>Haramaya University, Ethiopia</span>
               </div>
             </div>
-          </motion.div>
+          </motion.div> 
         </div>
 
         {/* Bottom Bar */}

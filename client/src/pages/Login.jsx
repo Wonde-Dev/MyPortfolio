@@ -1,8 +1,7 @@
 import React, { useState } from 'react';
-import { motion } from 'framer-motion';
 import { Mail, Lock, LogIn, Loader } from 'lucide-react';
 import { FaGithub, FaGoogle } from 'react-icons/fa6';
-import axios from 'axios';
+import api from '../api';
 import { useNavigate } from 'react-router-dom';
 import toast from 'react-hot-toast';
 import { useTheme } from '../contexts/ThemeContext';
@@ -19,7 +18,7 @@ const Login = () => {
     e.preventDefault();
     setLoading(true);
     try {
-      const res = await axios.post('http://localhost:5000/api/auth/login', formData);
+      const res = await api.post('/api/auth/login', formData);
       localStorage.setItem('token', res.data.token);
       localStorage.setItem('user', JSON.stringify(res.data.user));
       toast.success('Login successful!');
@@ -42,7 +41,7 @@ const Login = () => {
         avatar: null
       };
       
-      const res = await axios.post('http://localhost:5000/api/auth/google', googleUser);
+      const res = await api.post('/api/auth/google', googleUser);
       localStorage.setItem('token', res.data.token);
       localStorage.setItem('user', JSON.stringify(res.data.user));
       toast.success('Google login successful!');
@@ -65,7 +64,7 @@ const Login = () => {
         avatar: null
       };
       
-      const res = await axios.post('http://localhost:5000/api/auth/google', githubUser);
+      const res = await api.post('/api/auth/google', githubUser);
       localStorage.setItem('token', res.data.token);
       localStorage.setItem('user', JSON.stringify(res.data.user));
       toast.success('GitHub login successful!');
