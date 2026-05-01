@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import api from '../api';
 
 export const useProjects = () => {
@@ -6,10 +6,11 @@ export const useProjects = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const fetchProjects = async () => {
+  const fetchProjects = useCallback(async () => {
     try {
       setLoading(true);
       const response = await api.get('/api/projects');
+      
       // Compute type for each project based on which URL field is populated
       const projectsWithType = response.data.map(project => {
         let type = 'link'; // default
@@ -22,6 +23,7 @@ export const useProjects = () => {
         else if (project.live_url) type = 'link';
         return { ...project, type };
       });
+      
       setProjects(projectsWithType);
       setError(null);
     } catch (err) {
@@ -29,26 +31,35 @@ export const useProjects = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     fetchProjects();
-// eslint-disable-next-line react-hooks/set-state-in-effect -- Standard initialization
-  }, []);
+  }, [fetchProjects]);
 
   const addProject = async (data, token) => {
     try {
+      // Convert data to FormData if it contains FormData objects
       const isFormData = data instanceof FormData;
       
-      const response = await api.post('/api/projects', data, {
-        headers: isFormData 
-          ? { Authorization: `Bearer ${token}` }
-          : { Authorization: `Bearer ${token}` }
-      });
+      let response;
+      if (isFormData) {
+        response = await api.post('/api/projects', data, {
+          headers: { 
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'multipart/form-data'
+          }
+        });
+      } else {
+        response = await api.post('/api/projects', data, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+      }
+      
       await fetchProjects();
       return { success: true, data: response.data };
     } catch (err) {
-      return { success: false, error: err.response?.data?.message };
+      return { success: false, error: err.response?.data?.message || 'Failed to add project' };
     }
   };
 
@@ -56,15 +67,24 @@ export const useProjects = () => {
     try {
       const isFormData = data instanceof FormData;
       
-      const response = await api.put(`/api/projects/${id}`, data, {
-        headers: isFormData 
-          ? { Authorization: `Bearer ${token}` }
-          : { Authorization: `Bearer ${token}` }
-      });
+      let response;
+      if (isFormData) {
+        response = await api.put(`/api/projects/${id}`, data, {
+          headers: { 
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'multipart/form-data'
+          }
+        });
+      } else {
+        response = await api.put(`/api/projects/${id}`, data, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+      }
+      
       await fetchProjects();
       return { success: true, data: response.data };
     } catch (err) {
-      return { success: false, error: err.response?.data?.message };
+      return { success: false, error: err.response?.data?.message || 'Failed to update project' };
     }
   };
 
@@ -76,7 +96,53 @@ export const useProjects = () => {
       await fetchProjects();
       return { success: true };
     } catch (err) {
-      return { success: false, error: err.response?.data?.message };
+      return { success: false, error: err.response?.data?.message || 'Failed to delete project' };
+    }
+  };
+
+  // File management functions
+   const uploadFiles = async (projectId, files, token, options = {}) => {
+     try {
+       const formData = new FormData();
+       files.forEach((file, index) => {
+         formData.append('files', file.file);
+         if (file.caption) formData.append(`caption[${index}]`, file.caption);
+         if (file.isFeatured) formData.append(`is_featured[${index}]`, 'true');
+       });
+       if (options.type) formData.append('type', options.type);
+
+       const response = await api.post(`/api/projects/${projectId}/files/bulk`, formData, {
+         headers: { 
+           'Authorization': `Bearer ${token}`,
+           'Content-Type': 'multipart/form-data'
+         }
+       });
+
+       return { success: true, data: response.data };
+     } catch (err) {
+       return { success: false, error: err.response?.data?.message || 'Failed to upload files' };
+     }
+   };
+
+  const deleteFile = async (projectId, fileId, token) => {
+    try {
+      await api.delete(`/api/projects/${projectId}/files/${fileId}`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      return { success: true };
+    } catch (err) {
+      return { success: false, error: err.response?.data?.message || 'Failed to delete file' };
+    }
+  };
+
+  const reorderFiles = async (projectId, fileOrder, token) => {
+    try {
+      await api.post(`/api/projects/${projectId}/files/reorder`, { fileOrder }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      return { success: true };
+    } catch (err) {
+      return { success: false, error: err.response?.data?.message || 'Failed to reorder files' };
     }
   };
 
@@ -87,6 +153,9 @@ export const useProjects = () => {
     addProject,
     updateProject,
     deleteProject,
-    fetchProjects
+    fetchProjects,
+    uploadFiles,
+    deleteFile,
+    reorderFiles
   };
 };

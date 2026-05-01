@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { motion } from 'framer-motion'; // eslint-disable-line no-unused-vars
 import {
     Mail,
     Phone,
@@ -98,7 +98,7 @@ const Footer = () => {
            >
              <h3 className="text-lg font-semibold mb-4">Quick Links</h3>
              <ul className="space-y-2">
-                {quickLinks.map((link, _index) => (
+                 {quickLinks.map((link) => (
                  <li key={link.path}>
                    <Link
                      to={link.path}

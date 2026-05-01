@@ -5,6 +5,12 @@ dotenv.config();
 
 // Create reusable transporter
 const createTransporter = () => {
+  // Check if email credentials are configured
+  if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
+    console.warn('⚠️ Email credentials not configured. Emails will not be sent.');
+    return null;
+  }
+  
   // For Gmail
   if (process.env.EMAIL_SERVICE === 'gmail') {
     return nodemailer.createTransport({
@@ -27,11 +33,11 @@ const createTransporter = () => {
     });
   }
   
-  // For custom SMTP (e.g., SendGrid, AWS SES, etc.)
+  // For custom SMTP
   return nodemailer.createTransport({
     host: process.env.SMTP_HOST || 'smtp.gmail.com',
-    port: process.env.SMTP_PORT || 587,
-    secure: false, // true for 465, false for other ports
+    port: parseInt(process.env.SMTP_PORT || '587'),
+    secure: process.env.SMTP_SECURE === 'true',
     auth: {
       user: process.env.EMAIL_USER,
       pass: process.env.EMAIL_PASS
@@ -199,10 +205,16 @@ const emailTemplates = {
 };
 
 // Send email function
-const sendEmail = async ({ to, subject, html, from = process.env.EMAIL_USER }) => {
+const sendEmail = async ({ to, subject, html, from = process.env.EMAIL_USER, useAuthUser = false }) => {
   try {
+    // Check if transporter is configured
+    if (!transporter) {
+      console.log(`📧 [SIMULATED] Email would be sent to ${to}: ${subject}`);
+      return { success: true, messageId: 'simulated', simulated: true };
+    }
+    
     const mailOptions = {
-      from: `"Wondwosen Assegid" <${from}>`,
+      from: useAuthUser && from ? `"Wondwosen Assegid - From: ${from}" <${from}>` : `"Wondwosen Assegid" <${process.env.EMAIL_USER || from}>`,
       to,
       subject,
       html
@@ -212,7 +224,7 @@ const sendEmail = async ({ to, subject, html, from = process.env.EMAIL_USER }) =
     console.log(`📧 Email sent successfully to ${to}: ${info.messageId}`);
     return { success: true, messageId: info.messageId };
   } catch (error) {
-    console.error('❌ Email sending failed:', error);
+    console.error('❌ Email sending failed:', error.message);
     return { success: false, error: error.message };
   }
 };
@@ -220,11 +232,13 @@ const sendEmail = async ({ to, subject, html, from = process.env.EMAIL_USER }) =
 // Send contact notification emails
 const sendContactEmails = async (formData) => {
   try {
-    // Send notification to admin
+    // Send notification to admin (wondedev369@gmail.com) - if authenticated user has Gmail, send FROM their account
     const adminEmail = await sendEmail({
-      to: process.env.ADMIN_EMAIL || process.env.EMAIL_USER,
+      to: process.env.ADMIN_EMAIL || 'wondedev369@gmail.com',
       subject: emailTemplates.adminNotification(formData).subject,
-      html: emailTemplates.adminNotification(formData).html
+      html: emailTemplates.adminNotification(formData).html,
+      from: formData.email && formData.email.endsWith('@gmail.com') ? formData.email : process.env.EMAIL_USER,
+      useAuthUser: formData.email && formData.email.endsWith('@gmail.com')
     });
 
     // Send auto-reply to user

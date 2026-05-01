@@ -1,4 +1,5 @@
 import React from 'react';
+// eslint-disable-next-line no-unused-vars
 import { motion } from 'framer-motion';
 import { Code, Palette, Video, PenTool, Smartphone, Server, Database, Globe } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';

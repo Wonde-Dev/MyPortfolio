@@ -1,7 +1,7 @@
 USE portfolio_db;
 
 INSERT IGNORE INTO users (username, email, password_hash, role, full_name)
-VALUES ('admin', 'admin@wondwosen.com', '...', 'admin', 'Wondwosen Assegid');
+VALUES ('admin', 'admin@wondwosen.com', '$2b$10$MTbcrV7sUn0JFo.NbWPIpe7HDIyQrIpKBXeqqjqYgrS3J3RRaMwEC', 'admin', 'Wondwosen Assegid');
 
 INSERT INTO skills (name, category, level, icon, color, years_of_experience, order_position) VALUES
 ('React.js', 'Frontend', 90, '⚛️', '#61DAFB', 2.0, 1),

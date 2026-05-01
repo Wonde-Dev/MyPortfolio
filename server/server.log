@@ -1,0 +1,11 @@
+✅ MySQL database connected successfully
+✅ Projects table ready
+✅ Contact messages table ready
+✅ Skills table ready
+✅ Testimonials table ready
+✅ Database tables initialized
+ℹ️ Admin user already exists
+🚀 Server running on port 5000
+📦 Models loaded: User, Project, Contact, Skill, Testimonial
+🔗 API: http://localhost:5000/api
+🌐 Client: http://localhost:3000

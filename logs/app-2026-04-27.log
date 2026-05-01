@@ -1,0 +1,14 @@
+{"timestamp":"2026-04-27T18:34:21.739Z","level":"WARN","message":"Admin email notification failed","name":"Test","email":"test@test.com"}
+{"timestamp":"2026-04-27T18:34:21.741Z","level":"INFO","message":"New contact message received","from":"test@test.com","attachments":[],"adminEmailSent":false,"userEmailSent":false}
+{"timestamp":"2026-04-27T18:51:55.617Z","level":"WARN","message":"Admin email notification failed","name":"Test","email":"test@example.com"}
+{"timestamp":"2026-04-27T18:51:55.620Z","level":"INFO","message":"New contact message received","from":"test@example.com","attachments":[],"adminEmailSent":false,"userEmailSent":false}
+{"timestamp":"2026-04-27T19:01:02.612Z","level":"WARN","message":"Admin email notification failed","name":"wonde","email":"usawonder135@gmail.com"}
+{"timestamp":"2026-04-27T19:01:02.613Z","level":"INFO","message":"New contact message received","from":"usawonder135@gmail.com","attachments":[],"adminEmailSent":false,"userEmailSent":false}
+{"timestamp":"2026-04-27T19:10:04.298Z","level":"WARN","message":"Admin email notification failed","name":"Wondwosen Assegid","email":"wondewosen@gmail.com"}
+{"timestamp":"2026-04-27T19:10:04.298Z","level":"INFO","message":"New contact message received","from":"wondewosen@gmail.com","attachments":[],"adminEmailSent":false,"userEmailSent":false}
+{"timestamp":"2026-04-27T19:10:57.502Z","level":"WARN","message":"Admin email notification failed","name":"Wondwosen Assegid","email":"wondewosen@gmail.com"}
+{"timestamp":"2026-04-27T19:10:57.502Z","level":"INFO","message":"New contact message received","from":"wondewosen@gmail.com","attachments":[],"adminEmailSent":false,"userEmailSent":false}
+{"timestamp":"2026-04-27T19:15:24.000Z","level":"WARN","message":"Admin email notification failed","name":"Regular User","email":"user@example.com"}
+{"timestamp":"2026-04-27T19:15:24.001Z","level":"INFO","message":"New contact message received","from":"user@example.com","attachments":[],"adminEmailSent":false,"userEmailSent":false}
+{"timestamp":"2026-04-27T19:15:25.181Z","level":"WARN","message":"Admin email notification failed","name":"Wondwosen Assegid","email":"wondewosen@gmail.com"}
+{"timestamp":"2026-04-27T19:15:25.182Z","level":"INFO","message":"New contact message received","from":"wondewosen@gmail.com","attachments":[],"adminEmailSent":false,"userEmailSent":false}

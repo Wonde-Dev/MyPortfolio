@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+/* global process */
 import { Mail, Lock, LogIn, Loader } from 'lucide-react';
 import { FaGithub, FaGoogle } from 'react-icons/fa6';
 import api from '../api';
@@ -10,6 +11,7 @@ const Login = () => {
   const [formData, setFormData] = useState({ email: '', password: '' });
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
+  const [githubLoading, setGithubLoading] = useState(false);
   const navigate = useNavigate();
   const { getThemeStyles } = useTheme();
   const themeStyles = getThemeStyles();
@@ -33,46 +35,22 @@ const Login = () => {
   const handleGoogleLogin = async () => {
     setGoogleLoading(true);
     try {
-      // In a real app, this would redirect to Google OAuth
-      // For demo, we'll simulate a Google login with a test account
-      const googleUser = {
-        email: 'admin@wondwosen.com',
-        name: 'Wondwosen Assegid',
-        avatar: null
-      };
-      
-      const res = await api.post('/api/auth/google', googleUser);
-      localStorage.setItem('token', res.data.token);
-      localStorage.setItem('user', JSON.stringify(res.data.user));
-      toast.success('Google login successful!');
-      navigate('/admin');
+      const backendUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
+      window.location.href = `${backendUrl}/api/auth/google`;
     } catch (error) {
       toast.error(error.response?.data?.message || 'Google login failed');
-    } finally {
       setGoogleLoading(false);
     }
   };
 
   const handleGithubLogin = async () => {
-    setGoogleLoading(true);
+    setGithubLoading(true);
     try {
-      // In a real app, this would redirect to GitHub OAuth
-      // For demo, we'll simulate a GitHub login with a test account
-      const githubUser = {
-        email: 'admin@wondwosen.com',
-        name: 'Wondwosen Assegid',
-        avatar: null
-      };
-      
-      const res = await api.post('/api/auth/google', githubUser);
-      localStorage.setItem('token', res.data.token);
-      localStorage.setItem('user', JSON.stringify(res.data.user));
-      toast.success('GitHub login successful!');
-      navigate('/admin');
+      const backendUrl = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
+      window.location.href = `${backendUrl}/api/auth/github`;
     } catch (error) {
       toast.error(error.response?.data?.message || 'GitHub login failed');
-    } finally {
-      setGoogleLoading(false);
+      setGithubLoading(false);
     }
   };
 
@@ -148,18 +126,16 @@ const Login = () => {
 
           <button
             onClick={handleGithubLogin}
-            disabled={googleLoading}
+            disabled={githubLoading}
             className="w-full px-6 py-3 bg-gray-900 dark:bg-gray-700 text-white rounded-lg font-semibold hover:shadow-lg transition-all flex items-center justify-center gap-2"
           >
             <FaGithub size={20} />
-            {googleLoading ? 'Logging in...' : 'Continue with GitHub'}
+            {githubLoading ? 'Logging in...' : 'Continue with GitHub'}
           </button>
         </div>
 
-        <div className="mt-6 text-center text-sm text-gray-600 dark:text-gray-400">
-          <p>Demo credentials:</p>
-          <p>Email: admin@wondwosen.com</p>
-          <p>Password: Admin123!</p>
+        <div className="mt-6 text-center text-sm text-gray-500 dark:text-gray-400">
+          <p>For demo purposes, use the admin credentials registered on the server.</p>
         </div>
       </motion.div>
     </div>

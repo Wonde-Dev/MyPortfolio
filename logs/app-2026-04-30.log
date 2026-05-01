@@ -1,0 +1,2 @@
+{"timestamp":"2026-05-01T06:09:51.319Z","level":"WARN","message":"Admin email notification failed","name":"wonde","email":"usawonder135@gmail.com"}
+{"timestamp":"2026-05-01T06:09:51.323Z","level":"INFO","message":"New contact message received","from":"usawonder135@gmail.com","attachments":[],"adminEmailSent":false,"userEmailSent":false}

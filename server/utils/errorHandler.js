@@ -60,7 +60,25 @@ export const errorHandler = (err, req, res, next) => {
   let statusCode = err.statusCode || 500;
   let message = err.message || 'Internal Server Error';
   
-  // Handle specific error types
+  // Handle Multer errors
+  if (err.code === 'LIMIT_FILE_SIZE') {
+    statusCode = 400;
+    message = 'File too large (max 50MB)';
+  }
+  if (err.code === 'LIMIT_FILE_COUNT') {
+    statusCode = 400;
+    message = 'Too many files uploaded';
+  }
+  if (err.code === 'LIMIT_UNEXPECTED_FILE') {
+    statusCode = 400;
+    message = 'Unexpected file field';
+  }
+  if (err.code === 'LIMIT_FIELD_KEY') {
+    statusCode = 400;
+    message = 'Field name too long';
+  }
+  
+  // Handle database errors
   if (err.code === 'ER_DUP_ENTRY') {
     statusCode = 409;
     message = 'Duplicate entry. This record already exists.';

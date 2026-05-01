@@ -32,7 +32,6 @@ export const useAuth = () => {
 
   useEffect(() => {
     checkAuth();
-// eslint-disable-next-line react-hooks/set-state-in-effect -- Standard initialization
   }, []);
 
   const login = async (email, password) => {

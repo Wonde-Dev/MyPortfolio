@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { motion } from 'framer-motion';
 import { Users, FolderGit2, Mail, LogOut, Edit, Trash2, Eye } from 'lucide-react';
 import api from '../api';
 import { useNavigate } from 'react-router-dom';
@@ -8,26 +9,26 @@ import { useTheme } from '../contexts/ThemeContext';
 const AdminDashboard = () => {
   const [activeTab, setActiveTab] = useState('projects');
   const [projects, setProjects] = useState([]);
+  // eslint-disable-next-line no-unused-vars
   const [messages, setMessages] = useState([]);
   const [stats, setStats] = useState({ projects: 0, messages: 0 });
   const navigate = useNavigate();
   const { getThemeStyles } = useTheme();
   const themeStyles = getThemeStyles();
 
-  useEffect(() => {
-    fetchData();
-  }, []);
-
   const fetchData = async () => {
     try {
       const projectsRes = await api.get('/api/projects');
       setProjects(projectsRes.data);
       setStats(prev => ({ ...prev, projects: projectsRes.data.length }));
-    } catch (error) {
-      console.error('Error fetching data:', error);
+    } catch (err) {
+      console.error('Error fetching data:', err);
     }
   };
 
+  useEffect(() => {
+    fetchData();
+  }, []);
   const handleDeleteProject = async (id) => {
     const token = localStorage.getItem('token');
     if (window.confirm('Are you sure you want to delete this project?')) {
@@ -37,7 +38,7 @@ const AdminDashboard = () => {
         });
         toast.success('Project deleted successfully');
         fetchData();
-      } catch (error) {
+      } catch {
         toast.error('Error deleting project');
       }
     }
